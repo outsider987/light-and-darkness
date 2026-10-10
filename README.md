@@ -19,7 +19,8 @@ TypeScript + Canvas，零執行期依賴，所有圖像與音樂都由程式即�
   - 敵人 AI：待機誘敵、主動進攻、治療者、施法者、固定砲台（Laser Eye / Torch Eye）、Boss
 - 原創像素美術（所有人物、敵人、地形皆由程式繪製）、原創 chiptune 配樂（WebAudio 音序器）、音效合成
 - 戰鬥演出畫面：75 個單位（30 名夥伴 + 45 種敵人）各有一張 SEGA 風格大型戰鬥圖（以程式小圖為參考圖，由 Qwen Image 2.1 重繪後去背），魔法有火 / 冰 / 雷 / 回復 / 暗等演出特效
-- 戰鬥演出用的 12 張手繪風背景（草原、森林、山地、河畔、船甲板、城堡、洞窟、遺跡、荒地、熔岩、王座、古代之塔）與標題畫面，以及 15 首配樂，是用本地 ComfyUI 生成（Qwen Image 2.1 / ACE-Step 1.5），放在 `public/bg`、`public/music`；缺檔時自動退回程式生成的版本
+- 戰鬥演出用的 12 張手繪風背景（草原、森林、山地、河畔、船甲板、城堡、洞窟、遺跡、荒地、熔岩、王座、古代之塔）、標題與結局畫面、15 首配樂、12 個音效，都是用本地 ComfyUI 生成（Qwen Image 2.1 / ACE-Step 1.5 / Stable Audio 3 SFX），放在 `public/bg`、`public/sprites`、`public/music`、`public/sfx`；缺檔時自動退回程式生成的版本
+- 原作特色：開局為主角命名、升級小曲、Egress 回教會、教會轉職、總部 Nova 編隊
 - 存檔於瀏覽器（教會存檔）；支援鍵盤、觸控按鈕、全螢幕
 
 ## 操作
@@ -47,7 +48,8 @@ npm run preview    # 以正式建置啟動 http://localhost:4173 （測試腳本
 npm run smoke      # Playwright 無頭瀏覽器冒煙測試：標題→開場→城鎮→商店→教會→戰鬥
 npm run playthrough # 自動打完全部 23 場戰鬥，並執行每個地點的所有 NPC 腳本
 node scripts/tour.mjs            # 截圖所有地圖與戰場，做成 contact sheet
-node scripts/comfy/gen-backgrounds.mjs && node scripts/comfy/gen-music.mjs && npm run assets   # 用 ComfyUI 重新生成素材
+node scripts/comfy/gen-backgrounds.mjs && node scripts/comfy/gen-music.mjs && node scripts/comfy/gen-sprites.mjs && node scripts/comfy/gen-sfx.mjs && npm run assets   # 用 ComfyUI 重新生成素材
+node scripts/flows.mjs && node scripts/exits.mjs   # 城鎮選單流程、所有出口的覆蓋測試
 ```
 
 推送到 `main` 後，GitHub Actions 會自動測試、建置並部署到 GitHub Pages。
