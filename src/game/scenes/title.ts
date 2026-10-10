@@ -11,6 +11,7 @@ import { CHAPTERS } from '../data/chapters';
 import { director } from '../director';
 import { unitSprite } from '../sprites';
 import { CHARACTERS } from '../data/characters';
+import { image } from '../../engine/assets';
 
 const OPENING = [
   'Long ago, the forces of Light and Darkness',
@@ -116,22 +117,31 @@ export class TitleScene implements Scene {
       }
       return;
     }
-    // night sky gradient with stars
-    for (let i = 0; i < 12; i++) {
-      ctx.fillStyle = `rgb(${8 + i * 2},${10 + i * 3},${40 + i * 6})`;
-      ctx.fillRect(0, i * 20, W, 20);
+    const art = image('title');
+    if (art) {
+      ctx.drawImage(art, 0, 0, W, H);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(0, 36, W, 64);
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(0, 196, W, 44);
+    } else {
+      // night sky gradient with stars
+      for (let i = 0; i < 12; i++) {
+        ctx.fillStyle = `rgb(${8 + i * 2},${10 + i * 3},${40 + i * 6})`;
+        ctx.fillRect(0, i * 20, W, 20);
+      }
+      for (let i = 0; i < 40; i++) {
+        const sx = (i * 97 + 13) % W, sy = (i * 53 + 7) % 150;
+        const tw = (this.frame + i * 7) % 60 < 30;
+        ctx.fillStyle = tw ? '#f8f8f8' : '#8090c0';
+        ctx.fillRect(sx, sy, 1, 1);
+      }
+      // ground
+      ctx.fillStyle = '#183018';
+      ctx.fillRect(0, 196, W, 44);
+      ctx.fillStyle = '#204020';
+      ctx.fillRect(0, 196, W, 2);
     }
-    for (let i = 0; i < 40; i++) {
-      const sx = (i * 97 + 13) % W, sy = (i * 53 + 7) % 150;
-      const tw = (this.frame + i * 7) % 60 < 30;
-      ctx.fillStyle = tw ? '#f8f8f8' : '#8090c0';
-      ctx.fillRect(sx, sy, 1, 1);
-    }
-    // ground
-    ctx.fillStyle = '#183018';
-    ctx.fillRect(0, 196, W, 44);
-    ctx.fillStyle = '#204020';
-    ctx.fillRect(0, 196, W, 2);
     // logo
     ctx.font = '16px "Press Start 2P", "Courier New", monospace';
     ctx.textBaseline = 'top';

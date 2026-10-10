@@ -54,24 +54,43 @@ class AudioEngine {
   private nextStep = 0;
   private loop = true;
   private active: AudioScheduledSourceNode[] = [];
+  /** Streamed tracks: id -> url. When present (and decodable) they replace the sequencer song. */
+  private streams: Record<string, string> = {};
+  private buffers = new Map<string, AudioBuffer | null>();
+  private streamToken = 0;
+  private streamNodes: { src: AudioBufferSourceNode; gain: GainNode }[] = [];
+  private streamTimer: number | null = null;
 
   register(songs: Record<string, Song>): void {
     Object.assign(this.songs, songs);
   }
 
-  /** Must be called from a user gesture. */
-  unlock(): void {
-    if (this.ctx) {
-      if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
-      return;
-    }
+  /** Register streamed music files (mp3/ogg). Missing files fall back to the sequencer automatically. */
+  registerStreams(urls: Record<string, string>): void {
+    Object.assign(this.streams, urls);
+  }
+
+  /** Create the context early (suspended) so decoding can start before the first gesture. */
+  init(): void {
+    if (this.ctx) return;
     try {
       const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AC();
     } catch {
       return;
     }
-    const c = this.ctx;
+    this.setup();
+  }
+
+  private setup(): void {
+    const c = this.ctx!;
+    c.onstatechange = () => {
+      if (c.state === 'running' && this.pending) {
+        const p = this.pending;
+        this.pending = null;
+        this.play(p);
+      }
+    };
     this.master = c.createGain();
     this.master.gain.value = this.muted ? 0 : 0.35;
     this.master.connect(c.destination);
@@ -82,11 +101,94 @@ class AudioEngine {
     this.noiseBuf = c.createBuffer(1, len, c.sampleRate);
     const data = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-    if (this.pending) {
-      const p = this.pending;
-      this.pending = null;
-      this.play(p);
+  }
+
+  private async loadBuffer(id: string): Promise<AudioBuffer | null> {
+    if (this.buffers.has(id)) return this.buffers.get(id)!;
+    const url = this.streams[id];
+    if (!url || !this.ctx) return null;
+    this.buffers.set(id, null);
+    try {
+      const r = await fetch(url);
+      if (!r.ok) return null;
+      const data = await r.arrayBuffer();
+      const buf = await this.ctx.decodeAudioData(data);
+      this.buffers.set(id, buf);
+      return buf;
+    } catch {
+      return null;
     }
+  }
+
+  preloadStreams(ids: string[]): void {
+    for (const id of ids) void this.loadBuffer(id);
+  }
+
+  private stopStream(): void {
+    if (this.streamTimer !== null) {
+      clearTimeout(this.streamTimer);
+      this.streamTimer = null;
+    }
+    const now = this.ctx?.currentTime ?? 0;
+    for (const n of this.streamNodes) {
+      try {
+        n.gain.gain.cancelScheduledValues(now);
+        n.gain.gain.setValueAtTime(n.gain.gain.value, now);
+        n.gain.gain.linearRampToValueAtTime(0.0001, now + 0.15);
+        n.src.stop(now + 0.2);
+      } catch { /* already stopped */ }
+    }
+    this.streamNodes = [];
+    this.streamToken++;
+  }
+
+  /** Play a decoded buffer, looping with a short crossfade so the seam is inaudible. */
+  private playStream(id: string, buf: AudioBuffer, loop: boolean): void {
+    if (!this.ctx || !this.musicGain) return;
+    const token = ++this.streamToken;
+    const FADE = 1.0;
+    const startAt = (when: number) => {
+      if (token !== this.streamToken || !this.ctx || !this.musicGain) return;
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, when);
+      gain.gain.linearRampToValueAtTime(1, when + (this.streamNodes.length ? FADE : 0.05));
+      src.connect(gain);
+      gain.connect(this.musicGain);
+      src.start(when);
+      this.streamNodes.push({ src, gain });
+      if (this.streamNodes.length > 2) this.streamNodes.shift();
+      const end = when + buf.duration;
+      if (loop && buf.duration > FADE * 2) {
+        gain.gain.setValueAtTime(1, end - FADE);
+        gain.gain.linearRampToValueAtTime(0.0001, end);
+        src.stop(end + 0.05);
+        const nextStart = end - FADE;
+        const delayMs = Math.max(0, (nextStart - this.ctx.currentTime) * 1000 - 300);
+        this.streamTimer = window.setTimeout(() => startAt(nextStart), delayMs);
+      } else {
+        src.stop(end + 0.05);
+        src.onended = () => { if (token === this.streamToken && !loop) this.current = null; };
+      }
+    };
+    startAt(this.ctx.currentTime + 0.05);
+  }
+
+  /** Must be called from a user gesture. */
+  unlock(): void {
+    if (!this.ctx) this.init();
+    const c = this.ctx as AudioContext | null;
+    if (!c) return;
+    const go = () => {
+      if (this.pending) {
+        const p = this.pending;
+        this.pending = null;
+        this.play(p);
+      }
+    };
+    if (c.state === 'suspended') c.resume().then(go).catch(() => {});
+    else go();
   }
 
   toggleMute(): boolean {
@@ -100,13 +202,32 @@ class AudioEngine {
   }
 
   play(id: string): void {
-    if (this.current === id && this.timer !== null) return;
-    if (!this.ctx || !this.songs[id]) {
+    if (this.current === id && (this.timer !== null || this.streamNodes.length)) return;
+    if (!this.ctx || this.ctx.state !== 'running' || (!this.songs[id] && !this.streams[id])) {
       this.pending = id;
       this.current = id;
       return;
     }
     this.stopMusic();
+    this.current = id;
+    if (this.streams[id]) {
+      const buf = this.buffers.get(id);
+      const loop = !['victory', 'levelup', 'gameover'].includes(id);
+      if (buf) {
+        this.playStream(id, buf, loop);
+        return;
+      }
+      if (buf === undefined) {
+        // decode in the background; play the sequencer meanwhile if available, then switch over
+        void this.loadBuffer(id).then((b) => {
+          if (b && this.current === id) {
+            this.stopSequencer();
+            this.playStream(id, b, loop);
+          }
+        });
+      }
+      if (!this.songs[id]) return;
+    }
     const song = this.songs[id];
     this.current = id;
     this.loop = song.loop !== false;
@@ -119,7 +240,7 @@ class AudioEngine {
     this.schedule();
   }
 
-  stopMusic(): void {
+  private stopSequencer(): void {
     if (this.timer !== null) {
       clearInterval(this.timer);
       this.timer = null;
@@ -128,6 +249,11 @@ class AudioEngine {
       try { n.stop(); } catch { /* already stopped */ }
     }
     this.active = [];
+  }
+
+  stopMusic(): void {
+    this.stopSequencer();
+    this.stopStream();
     this.current = null;
     this.pending = null;
   }

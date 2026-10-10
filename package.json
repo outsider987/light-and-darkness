@@ -2,7 +2,7 @@
   "name": "light-and-darkness",
   "version": "1.0.0",
   "private": true,
-  "description": "光明與黑暗 (Shining Force) — a complete browser remake in TypeScript + Canvas",
+  "description": "\u5149\u660e\u8207\u9ed1\u6697 (Shining Force) \u2014 a complete browser remake in TypeScript + Canvas",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/*.test.ts",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "playthrough": "node scripts/playthrough.mjs",
+    "assets": "node scripts/comfy/postprocess.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

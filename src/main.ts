@@ -16,10 +16,15 @@ import type { GameState } from './game/types';
 import { newGame } from './game/state';
 import { LOCATIONS } from './game/data/locations';
 import { widgets, dialog } from './game/ui';
+import { BASE, BACKDROP_IDS, MUSIC_IDS, preloadImages } from './engine/assets';
 
 let current: GameState | null = null;
 
 audio.register(SONGS);
+audio.registerStreams(Object.fromEntries(MUSIC_IDS.map((id) => [id, `${BASE}music/${id}.mp3`])));
+audio.init();
+audio.preloadStreams(['title', 'opening', 'town', 'battle']);
+preloadImages(BACKDROP_IDS);
 director.enterLocation = (g, loc, x, y, dir) => {
   current = g;
   scenes.replace(new FieldScene(g, loc, x, y, dir));

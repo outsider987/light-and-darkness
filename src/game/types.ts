@@ -265,6 +265,8 @@ export interface BattleDef {
   chapter: number;
   rows: string[];
   music?: string;
+  /** painted backdrop id for the battle cutscene (defaults by terrain) */
+  backdrop?: string;
   /** spawn tiles for force units (in order) */
   spawns: [number, number][];
   enemies: EnemyPlacement[];

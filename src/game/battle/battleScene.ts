@@ -20,6 +20,7 @@ import { SPELLS } from '../data/spells';
 import { item as itemDef } from '../data/items';
 import { runScript } from '../script';
 import { director } from '../director';
+import { image } from '../../engine/assets';
 
 interface Cutscene {
   left: Unit;
@@ -1112,10 +1113,29 @@ export class BattleScene implements Scene {
     drawWidgets();
   }
 
+  backdropFor(ch: string): string {
+    if (this.def.backdrop) return this.def.backdrop;
+    const t = terrain(ch).name;
+    if (t === 'Deck') return 'sea';
+    if (t === 'Water' || t === 'Bridge' || t === 'Shallows') return 'water';
+    if (t === 'Forest' || t === 'Bush') return 'forest';
+    if (t === 'Hills' || t === 'Mountain' || t === 'Sand') return 'hills';
+    if (t === 'Lava') return 'lava';
+    if (t === 'Wasteland' || t === 'Dead Woods') return 'wasteland';
+    if (t === 'Ruins') return 'ruins';
+    if (t === 'Glass Floor' || t === 'Void') return 'tower';
+    if (t === 'Floor' || t === 'Carpet' || t === 'Stone Road' || t === 'Door' || t === 'Stairs' || t === 'Wall') return 'castle';
+    return 'grass';
+  }
+
   drawCutscene(cs: Cutscene): void {
-    // backdrop
+    // backdrop: painted image when available, procedural sky/ground otherwise
+    const bg = image(this.backdropFor(cs.terrainL));
     const sky = ['#2040a0', '#3060c0', '#5090e0', '#80b8f0'];
-    for (let i = 0; i < 4; i++) rect(0, i * 30, W, 30, sky[i]);
+    if (bg) {
+      ctx.drawImage(bg, 0, 0, 320, 140);
+      rect(0, 140, W, 40, '#000');
+    } else for (let i = 0; i < 4; i++) rect(0, i * 30, W, 30, sky[i]);
     const groundFor = (ch: string): string => {
       const t = terrain(ch).name;
       if (t === 'Water' || t === 'Bridge' || t === 'Deck') return '#3060d0';
@@ -1126,11 +1146,13 @@ export class BattleScene implements Scene {
       if (t === 'Lava') return '#d83810';
       return '#78c050';
     };
-    rect(0, 120, W / 2, 60, groundFor(cs.terrainL));
-    rect(W / 2, 120, W / 2, 60, groundFor(cs.terrainR));
-    rect(0, 120, W, 2, 'rgba(0,0,0,0.25)');
-    // far scenery
-    for (let i = 0; i < 6; i++) rect(10 + i * 56, 104 - (i % 3) * 6, 30, 16 + (i % 3) * 6, shade(groundFor(cs.terrainL), -30));
+    if (!bg) {
+      rect(0, 120, W / 2, 60, groundFor(cs.terrainL));
+      rect(W / 2, 120, W / 2, 60, groundFor(cs.terrainR));
+      rect(0, 120, W, 2, 'rgba(0,0,0,0.25)');
+      // far scenery
+      for (let i = 0; i < 6; i++) rect(10 + i * 56, 104 - (i % 3) * 6, 30, 16 + (i % 3) * 6, shade(groundFor(cs.terrainL), -30));
+    }
     const scale = 3;
     const lx = 64 + cs.lungeL + (cs.shakeL > 0 ? (cs.shakeL % 2 ? 3 : -3) : 0);
     const rx = W - 64 - TILE * scale + cs.lungeR + (cs.shakeR > 0 ? (cs.shakeR % 2 ? 3 : -3) : 0);

@@ -33,11 +33,12 @@ const startBattle = (id) => ev((id) => {
   g.party = g.party.slice(0, 12);
   for (const u of g.force) {
     u.level = Math.min(20, 2 + chapter * 2);
-    u.maxHp = u.hp = 18 + chapter * 9;
-    u.maxMp = u.mp = 10 + chapter * 4;
-    u.att = 6 + chapter * 6;
-    u.def = 4 + chapter * 4;
-    u.agi = 6 + chapter * 2;
+    u.maxHp = u.hp = 30 + chapter * 12;
+    u.maxMp = u.mp = 10 + chapter * 5;
+    u.att = 10 + chapter * 8;
+    u.def = 6 + chapter * 5;
+    u.agi = 10 + chapter * 3;
+    u.mov += 1;
     if (u.spells.length) u.spells = u.spells.map((s) => ({ ...s, level: Math.min(4, 1 + Math.floor(chapter / 2)) }));
   }
   g.lastChurch = { location: 'guardiana', x: 22, y: 15 };
@@ -48,7 +49,7 @@ async function playBattle(id) {
   const t0 = Date.now();
   await startBattle(id);
   await page.waitForTimeout(300);
-  let turns = 0, stalls = 0, lastSig = '';
+  let turns = 0, stalls = 0, lastSig = '', lastResult = null;
   const deadline = Date.now() + 240000;
   while (Date.now() < deadline) {
     const st = await ev(() => {
@@ -63,7 +64,8 @@ async function playBattle(id) {
         enemies: s.units.filter((u) => u.alive && u.team === 'enemy').length, force: s.units.filter((u) => u.alive && u.team === 'force').length,
       };
     });
-    if (st.scene !== 'battle') return { id, ok: true, turns, ms: Date.now() - t0, left: st.scene };
+    if (st.scene !== 'battle') return { id, ok: true, turns, ms: Date.now() - t0, left: st.scene, result: lastResult };
+    if (st.result) lastResult = st.result;
     const sig = JSON.stringify(st);
     if (sig === lastSig) { stalls++; if (stalls > 400) return { id, ok: false, turns, ms: Date.now() - t0, stuck: st }; } else stalls = 0;
     lastSig = sig;
@@ -71,7 +73,7 @@ async function playBattle(id) {
     if (st.status) { await tap('KeyX'); continue; }
     if (st.radial) {
       if (!st.radial[0]) await tap('KeyZ'); // attack
-      else if (!st.radial[1] && Math.random() < 0.5) { await tap('ArrowRight'); await tap('KeyZ'); } // magic sometimes
+      else if (!st.radial[1] && st.active !== 'Max' && Math.random() < 0.5) { await tap('ArrowRight'); await tap('KeyZ'); } // magic sometimes (never Max: his spell is Egress)
       else { await tap('ArrowLeft'); await tap('KeyZ'); } // stay
       continue;
     }
@@ -108,7 +110,7 @@ if (!only || !only.startsWith('loc:')) {
     const won = await ev((id) => !!window.lad.state?.flags['won:' + id], id);
     r.won = won;
     results.push(r);
-    console.log(`${id}: ${r.ok ? 'finished' : 'FAILED'} won=${won} turns=${r.turns} ${(r.ms / 1000).toFixed(0)}s${r.stuck ? ' stuck=' + JSON.stringify(r.stuck) : ''}`);
+    console.log(`${id}: ${r.ok ? 'finished' : 'FAILED'} result=${r.result} won=${won} turns=${r.turns} ${(r.ms / 1000).toFixed(0)}s${r.stuck ? ' stuck=' + JSON.stringify(r.stuck) : ''}`);
     await page.screenshot({ path: `${out}/${id}.png` });
     if (errors.length) console.log('errors so far:', errors.length);
   }
