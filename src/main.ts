@@ -13,7 +13,7 @@ import { EndingScene } from './game/scenes/ending';
 import { BATTLES } from './game/data/battles';
 import './game/data/content';
 import type { GameState } from './game/types';
-import { newGame } from './game/state';
+import { newGame, joinForce } from './game/state';
 import { LOCATIONS } from './game/data/locations';
 import { widgets, dialog } from './game/ui';
 import { BASE, BACKDROP_IDS, MUSIC_IDS, preloadImages } from './engine/assets';
@@ -106,6 +106,7 @@ async function start(): Promise<void> {
   director,
   get state() { return current; },
   newGame,
+  joinForce,
   LOCATIONS,
   BATTLES,
   widgets,

@@ -20,7 +20,7 @@ const tap = async (key, n = 1, delay = 40) => { for (let i = 0; i < n; i++) { aw
 await page.goto(url);
 await page.waitForFunction(() => window.lad && window.lad.scenes.stack.length > 0, null, { timeout: 20000 });
 await page.waitForTimeout(500);
-await ev(() => { window.lad.speed.value = 6; window.lad.audio.muted = true; });
+await ev(([full, god]) => { window.lad.speed.value = 6; window.lad.audio.muted = true; window.__full = full; window.__god = god; }, [!!process.env.FULL, !!process.env.GOD]);
 
 const battles = await ev(() => Object.keys(window.lad.BATTLES));
 const locations = await ev(() => Object.keys(window.lad.LOCATIONS));
@@ -30,6 +30,7 @@ const startBattle = (id) => ev((id) => {
   const lad = window.lad;
   const g = lad.newGame();
   const chapter = lad.BATTLES[id].chapter;
+  if (window.__full) for (const id of ['gong', 'gort', 'mae', 'khris', 'anri', 'zylo']) lad.joinForce(g, id);
   g.party = g.party.slice(0, 12);
   for (const u of g.force) {
     u.level = Math.min(20, 2 + chapter * 2);
@@ -39,6 +40,7 @@ const startBattle = (id) => ev((id) => {
     u.def = 6 + chapter * 5;
     u.agi = 10 + chapter * 3;
     u.mov += 1;
+    if (window.__god) { u.maxHp = u.hp = 400; u.def += 20; }
     if (u.spells.length) u.spells = u.spells.map((s) => ({ ...s, level: Math.min(4, 1 + Math.floor(chapter / 2)) }));
   }
   g.lastChurch = { location: 'guardiana', x: 22, y: 15 };

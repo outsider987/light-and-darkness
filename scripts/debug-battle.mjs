@@ -13,6 +13,7 @@ await ev(() => { window.lad.speed.value = 6; window.lad.audio.muted = true; });
 await ev((id) => {
   const g = window.lad.newGame();
   const chapter = window.lad.BATTLES[id].chapter;
+  for (const extra of ['gong', 'gort', 'mae', 'khris', 'anri', 'zylo']) window.lad.joinForce(g, extra);
   for (const u of g.force) { u.maxHp = u.hp = 30 + chapter * 12; u.maxMp = u.mp = 10 + chapter * 5; u.att = 10 + chapter * 8; u.def = 6 + chapter * 5; u.agi = 10 + chapter * 3; }
   window.lad.director.startBattle(g, id);
 }, id);
