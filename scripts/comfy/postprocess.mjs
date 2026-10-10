@@ -72,7 +72,13 @@ if (fs.existsSync('assets-src/sprites')) execFileSync('python3', ['-c', pySprite
 fs.mkdirSync('public/sfx', { recursive: true });
 for (const f of fs.existsSync('assets-src/sfx') ? fs.readdirSync('assets-src/sfx') : []) {
   if (!f.endsWith('.mp3')) continue;
-  fs.copyFileSync(path.join('assets-src/sfx', f), path.join('public/sfx', f));
+  const src = path.join('assets-src/sfx', f), dst = path.join('public/sfx', f);
+  try {
+    // trim trailing/leading silence so effects feel snappy
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', src, '-af', 'silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.02,areverse,silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05,areverse', '-b:a', '96k', dst]);
+  } catch {
+    fs.copyFileSync(src, dst);
+  }
   console.log('sfx', f);
 }
 fs.mkdirSync('public/music', { recursive: true });
