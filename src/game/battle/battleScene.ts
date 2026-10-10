@@ -20,7 +20,7 @@ import { SPELLS } from '../data/spells';
 import { item as itemDef } from '../data/items';
 import { runScript } from '../script';
 import { director } from '../director';
-import { image } from '../../engine/assets';
+import { image, unitImage } from '../../engine/assets';
 
 interface Cutscene {
   left: Unit;
@@ -35,6 +35,9 @@ interface Cutscene {
   terrainL: string;
   terrainR: string;
   t: number;
+  /** element effect playing over one side */
+  effect: { kind: string; side: 'L' | 'R'; t: number; seed: number } | null;
+  slash: { side: 'L' | 'R'; t: number } | null;
 }
 
 const HL_MOVE = 'rgba(80,140,255,0.45)';
@@ -116,6 +119,7 @@ export class BattleScene implements Scene {
       if (e.guard) u.guard = { x: e.x, y: e.y };
       this.units.push(u);
     }
+    for (const u of this.units) unitImage(u.team === 'force' ? u.id : u.defId ?? u.id);
     const hx = hero(g).x, hy = hero(g).y;
     this.cursor = { x: hx, y: hy };
     this.cam = { x: hx * TILE - W / 2 + TILE / 2, y: hy * TILE - H / 2 + TILE / 2 };
@@ -539,25 +543,48 @@ export class BattleScene implements Scene {
     const tiles = this.areaFor(caster, L, cx, cy);
     const team = sp.target === 'ally' ? caster.team : caster.team === 'force' ? 'enemy' : 'force';
     const targets = tiles.map(([x, y]) => this.unitAt(x, y)).filter((t): t is Unit => !!t && t.team === team);
+    // battle-screen presentation: caster vs. first target with an element effect
+    const primary = targets[0] ?? caster;
+    const left = caster.team === 'force' ? caster : primary.team === 'force' ? primary : caster;
+    const right = left === caster ? primary : caster;
+    const cs: Cutscene = {
+      left, right, hpL: left.hp, hpR: right.hp, lungeL: 0, lungeR: 0, shakeL: 0, shakeR: 0, popup: null,
+      terrainL: this.at(left.x, left.y), terrainR: this.at(right.x, right.y), t: 0, effect: null, slash: null,
+    };
+    const targetSide: 'L' | 'R' = primary === left ? 'L' : 'R';
+    yield* fadeOut(8, '#000');
+    this.anim = cs;
+    yield* fadeIn(8);
+    yield 8;
     yield* sayKeep(`${caster.name} cast ${sp.name} ${level}!`);
     audio.sfx(sp.sfx);
+    const kind = sp.kind === 'damage' ? (sp.element ?? 'fire') : sp.kind === 'heal' ? 'heal' : sp.kind === 'buff' ? 'buff' : sp.kind === 'debuff' ? 'debuff' : sp.status === 'desoul' ? 'dark' : 'status';
+    cs.effect = { kind, side: targetSide, t: 0, seed: rng.int(1, 9999) };
+    if (sp.kind === 'damage') yield* flash(3, sp.color);
+    for (let i = 0; i < 44; i++) {
+      cs.effect.t = i;
+      if (i === 24 && sp.kind === 'damage') { if (targetSide === 'R') cs.shakeR = 10; else cs.shakeL = 10; }
+      yield 1;
+    }
+    cs.effect = null;
     this.fx = { tiles, color: sp.color, t: 30 };
-    yield* flash(4, sp.color);
-    yield 26;
-    this.fx = null;
     let exp = 0;
     const killed: Unit[] = [];
     for (const t of targets) {
+      const isPrimary = t === primary;
+      const side: 'L' | 'R' = t === left ? 'L' : 'R';
       if (sp.kind === 'damage') {
         const dmg = magicDamage(L);
         const died = applyDamage(t, dmg);
         this.popup(t.x, t.y, `-${dmg}`, C.white);
+        if (isPrimary) { cs.popup = { side, txt: `${dmg}`, t: 40, color: C.white }; if (side === 'L') cs.hpL = t.hp; else cs.hpR = t.hp; }
         yield* sayKeep(`${t.name} took ${dmg} damage.`);
         if (caster.team === 'force') exp += expGain(caster, t, died);
-        if (died) killed.push(t);
+        if (died) { killed.push(t); if (isPrimary) { audio.sfx('death'); yield 16; yield* sayKeep(`${t.name} was defeated!`); } }
       } else if (sp.kind === 'heal') {
         const amt = heal(t, L.power >= 999 ? t.maxHp : L.power);
         this.popup(t.x, t.y, `+${amt}`, C.green);
+        if (isPrimary) { cs.popup = { side, txt: `+${amt}`, t: 40, color: C.green }; if (side === 'L') cs.hpL = t.hp; else cs.hpR = t.hp; }
         yield* sayKeep(`${t.name} recovered ${amt} HP.`);
         if (caster.team === 'force') exp += supportExp(caster, amt);
       } else if (sp.kind === 'buff' && sp.stat) {
@@ -583,7 +610,7 @@ export class BattleScene implements Scene {
         } else if (statusSucceeds(sp, L, t)) {
           if (sp.status === 'sleep') { t.sleep = 2 + rng.int(0, 1); yield* sayKeep(`${t.name} fell asleep!`); }
           else if (sp.status === 'muddle') { t.muddle = 2; yield* sayKeep(`${t.name} is confused!`); }
-          else if (sp.status === 'desoul') { applyDamage(t, t.hp); killed.push(t); yield* sayKeep(`${t.name}'s soul was torn away!`); if (caster.team === 'force') exp += expGain(caster, t, true); }
+          else if (sp.status === 'desoul') { applyDamage(t, t.hp); killed.push(t); if (isPrimary) { if (side === 'L') cs.hpL = 0; else cs.hpR = 0; } yield* sayKeep(`${t.name}'s soul was torn away!`); if (caster.team === 'force') exp += expGain(caster, t, true); }
           else if (sp.status === 'dispel') { t.mp = 0; yield* sayKeep(`${t.name}'s MP was drained!`); }
           if (caster.team === 'force' && sp.status !== 'desoul') exp += supportExp(caster, 20);
         } else yield* sayKeep(`${t.name} resisted the spell.`);
@@ -591,6 +618,11 @@ export class BattleScene implements Scene {
     }
     if (targets.length === 0) yield* sayKeep('But nothing happened.');
     if (caster.team === 'force' && exp > 0) yield* this.grantExp(caster, Math.min(49, exp));
+    yield* fadeOut(8, '#000');
+    this.anim = null;
+    this.cursorOn = false;
+    yield* fadeIn(8);
+    this.fx = null;
     for (const k of killed) yield* this.unitDied(k);
     closeDialog();
   }
@@ -746,7 +778,7 @@ export class BattleScene implements Scene {
     const cs: Cutscene = {
       left, right, hpL: left.hp + dmgL, hpR: right.hp + dmgR,
       lungeL: 0, lungeR: 0, shakeL: 0, shakeR: 0, popup: null,
-      terrainL: this.at(left.x, left.y), terrainR: this.at(right.x, right.y), t: 0,
+      terrainL: this.at(left.x, left.y), terrainR: this.at(right.x, right.y), t: 0, effect: null, slash: null,
     };
     yield* fadeOut(8, '#000');
     this.anim = cs;
@@ -771,6 +803,7 @@ export class BattleScene implements Scene {
           if (h.miss) audio.sfx('miss');
           else {
             audio.sfx(h.crit ? 'crit' : 'hit');
+            cs.slash = { side: aLeft ? 'R' : 'L', t: 8 };
             if (aLeft) cs.shakeR = 10; else cs.shakeL = 10;
             cs.popup = { side: aLeft ? 'R' : 'L', txt: h.crit ? `${h.dmg}!` : `${h.dmg}`, t: 40, color: h.crit ? C.yellow : C.white };
             if (aLeft) cs.hpR = Math.max(0, cs.hpR - h.dmg); else cs.hpL = Math.max(0, cs.hpL - h.dmg);
@@ -1026,6 +1059,7 @@ export class BattleScene implements Scene {
       if (this.anim.shakeL > 0) this.anim.shakeL--;
       if (this.anim.shakeR > 0) this.anim.shakeR--;
       if (this.anim.popup) { this.anim.popup.t--; if (this.anim.popup.t <= 0) this.anim.popup = null; }
+      if (this.anim.slash) { this.anim.slash.t--; if (this.anim.slash.t <= 0) this.anim.slash = null; }
     }
     if (this.banner) { this.banner.t--; if (this.banner.t <= 0) this.banner = null; }
   }
@@ -1154,15 +1188,44 @@ export class BattleScene implements Scene {
       for (let i = 0; i < 6; i++) rect(10 + i * 56, 104 - (i % 3) * 6, 30, 16 + (i % 3) * 6, shade(groundFor(cs.terrainL), -30));
     }
     const scale = 3;
-    const lx = 64 + cs.lungeL + (cs.shakeL > 0 ? (cs.shakeL % 2 ? 3 : -3) : 0);
-    const rx = W - 64 - TILE * scale + cs.lungeR + (cs.shakeR > 0 ? (cs.shakeR % 2 ? 3 : -3) : 0);
-    const by = 128 - TILE * scale;
+    const BIG_H = 104;
+    const groundY = 128;
+    const imgL = unitImage(cs.left.team === 'force' ? cs.left.id : cs.left.defId ?? cs.left.id);
+    const imgR = unitImage(cs.right.team === 'force' ? cs.right.id : cs.right.defId ?? cs.right.id);
+    const wL = imgL ? Math.round(imgL.width * (BIG_H / imgL.height)) : TILE * scale;
+    const wR = imgR ? Math.round(imgR.width * (BIG_H / imgR.height)) : TILE * scale;
+    const lx = 70 + cs.lungeL + (cs.shakeL > 0 ? (cs.shakeL % 2 ? 3 : -3) : 0);
+    const rx = W - 70 - wR + cs.lungeR + (cs.shakeR > 0 ? (cs.shakeR % 2 ? 3 : -3) : 0);
     const af = Math.floor(cs.t / 20) % 2;
+    // shadows
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(lx + 6, groundY - 3, wL - 12, 4);
+    ctx.fillRect(rx + 6, groundY - 3, wR - 12, 4);
     ctx.globalAlpha = cs.shakeL > 0 && cs.shakeL % 4 < 2 ? 0.4 : 1;
-    blitScaled(unitSprite(cs.left.sprite, 'right', af), lx, by, scale);
+    if (imgL) ctx.drawImage(imgL, lx, groundY - BIG_H + (af ? 1 : 0), wL, BIG_H);
+    else blitScaled(unitSprite(cs.left.sprite, 'right', af), lx, groundY - TILE * scale, scale);
     ctx.globalAlpha = cs.shakeR > 0 && cs.shakeR % 4 < 2 ? 0.4 : 1;
-    blitScaled(unitSprite(cs.right.sprite, 'left', af), rx, by, scale);
+    if (imgR) {
+      ctx.save();
+      ctx.translate(rx + wR, groundY - BIG_H + (af ? 1 : 0));
+      ctx.scale(-1, 1);
+      ctx.drawImage(imgR, 0, 0, wR, BIG_H);
+      ctx.restore();
+    } else blitScaled(unitSprite(cs.right.sprite, 'left', af), rx, groundY - TILE * scale, scale);
     ctx.globalAlpha = 1;
+    const centerOf = (side: 'L' | 'R') => (side === 'L' ? { x: lx + wL / 2, y: groundY - BIG_H / 2 } : { x: rx + wR / 2, y: groundY - BIG_H / 2 });
+    if (cs.slash) {
+      const c = centerOf(cs.slash.side);
+      const p = (8 - cs.slash.t) / 8;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(c.x - 30 + p * 10, c.y - 40 + p * 10);
+      ctx.lineTo(c.x + 10 + p * 10, c.y + 30 + p * 10);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+    }
+    if (cs.effect) this.drawEffect(cs.effect, centerOf(cs.effect.side), groundY);
     // stat windows
     const sw = (u: Unit, hp: number, x: number) => {
       win(x, 134, 132, 40);
@@ -1173,9 +1236,120 @@ export class BattleScene implements Scene {
     sw(cs.left, cs.hpL, 8);
     sw(cs.right, cs.hpR, W - 140);
     if (cs.popup) {
-      const px = cs.popup.side === 'L' ? lx + 36 : rx + 36;
-      const py = by - 10 - Math.max(0, 30 - cs.popup.t) * 0.5;
+      const px = cs.popup.side === 'L' ? lx + wL / 2 : rx + wR / 2;
+      const py = groundY - BIG_H - 10 - Math.max(0, 30 - cs.popup.t) * 0.5;
       textCenter(cs.popup.txt, px, Math.round(py), cs.popup.color);
+    }
+  }
+
+  /** Procedural spell effects for the battle screen. */
+  drawEffect(e: { kind: string; t: number; seed: number }, c: { x: number; y: number }, groundY: number): void {
+    const t = e.t;
+    const r = (i: number) => { const v = Math.sin(e.seed * 12.9898 + i * 78.233) * 43758.5453; return v - Math.floor(v); };
+    switch (e.kind) {
+      case 'fire': {
+        for (let i = 0; i < 26; i++) {
+          const life = (t * 1.6 + i * 7) % 44;
+          const x = c.x - 34 + r(i) * 68 + Math.sin((t + i) * 0.5) * 5;
+          const y = groundY - 4 - life * 2.2;
+          const size = 5 + Math.max(0, 12 - life / 3);
+          ctx.fillStyle = life < 14 ? '#fff0a0' : life < 28 ? '#f8a020' : '#d03010';
+          ctx.fillRect(Math.round(x - size / 2), Math.round(y), Math.round(size), Math.round(size * 1.4));
+        }
+        break;
+      }
+      case 'ice': {
+        const grow = Math.min(1, t / 18);
+        for (let i = 0; i < 8; i++) {
+          const ang = (i / 8) * Math.PI * 2;
+          const len = (18 + r(i) * 22) * grow;
+          const x0 = c.x + Math.cos(ang) * 8, y0 = c.y + Math.sin(ang) * 8;
+          ctx.strokeStyle = i % 2 ? '#c0f0ff' : '#ffffff';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(x0, y0);
+          ctx.lineTo(x0 + Math.cos(ang) * len, y0 + Math.sin(ang) * len);
+          ctx.stroke();
+        }
+        ctx.lineWidth = 1;
+        if (t > 26) {
+          for (let i = 0; i < 14; i++) {
+            const dx = (r(i + 20) - 0.5) * 70, dy = (r(i + 40) - 0.5) * 70 + (t - 26) * 2;
+            ctx.fillStyle = '#e0f8ff';
+            ctx.fillRect(Math.round(c.x + dx), Math.round(c.y + dy), 2, 2);
+          }
+        }
+        break;
+      }
+      case 'bolt': {
+        if (t % 6 < 4) {
+          for (let b = 0; b < 3; b++) {
+            ctx.strokeStyle = b === 0 ? '#ffffff' : '#f8f060';
+            ctx.lineWidth = b === 0 ? 3 : 2;
+            ctx.beginPath();
+            let x = c.x + (b - 1) * 12, y = 0;
+            ctx.moveTo(x, y);
+            while (y < c.y + 10) {
+              y += 10 + r(b * 50 + y) * 8;
+              x += (r(b * 70 + y) - 0.5) * 22;
+              ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          }
+          ctx.lineWidth = 1;
+        }
+        if (t > 20) {
+          ctx.fillStyle = t % 2 ? '#ffffff' : '#f8f060';
+          for (let i = 0; i < 10; i++) ctx.fillRect(Math.round(c.x + (r(i) - 0.5) * 60), Math.round(c.y + (r(i + 9) - 0.5) * 60), 2, 2);
+        }
+        break;
+      }
+      case 'heal':
+      case 'holy': {
+        for (let i = 0; i < 16; i++) {
+          const life = (t * 1.4 + i * 6) % 44;
+          const x = c.x - 30 + r(i) * 60;
+          const y = groundY - life * 2.2;
+          if (life > 40) continue;
+          ctx.fillStyle = (i + Math.floor(t / 4)) % 2 ? '#80ff90' : '#f8f8a0';
+          ctx.fillRect(Math.round(x), Math.round(y), 2, 2);
+          ctx.fillRect(Math.round(x) - 1, Math.round(y) + 1, 4, 1);
+          ctx.fillRect(Math.round(x) + 1, Math.round(y) - 1, 1, 4);
+        }
+        break;
+      }
+      case 'dark': {
+        for (let i = 0; i < 3; i++) {
+          const rad = 50 - ((t * 1.5 + i * 15) % 50);
+          ctx.strokeStyle = i % 2 ? '#c060f8' : '#5020a0';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, Math.max(1, rad), t * 0.2, t * 0.2 + Math.PI * 1.5);
+          ctx.stroke();
+        }
+        ctx.lineWidth = 1;
+        break;
+      }
+      case 'buff':
+      case 'debuff': {
+        const up = e.kind === 'buff';
+        ctx.fillStyle = up ? '#60c0ff' : '#f0a040';
+        for (let i = 0; i < 5; i++) {
+          const life = (t * 1.5 + i * 9) % 44;
+          const y = up ? groundY - 10 - life * 2 : groundY - 100 + life * 2;
+          const x = c.x - 24 + i * 12;
+          ctx.fillRect(Math.round(x), Math.round(y), 3, 8);
+          ctx.fillRect(Math.round(x) - 2, Math.round(up ? y : y + 6), 7, 2);
+        }
+        break;
+      }
+      default: {
+        ctx.fillStyle = '#e0e0ff';
+        for (let i = 0; i < 8; i++) {
+          const life = (t * 1.2 + i * 6) % 44;
+          ctx.fillRect(Math.round(c.x - 20 + r(i) * 40), Math.round(groundY - 20 - life * 1.8), 3, 3);
+        }
+      }
     }
   }
 }

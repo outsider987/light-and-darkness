@@ -17,6 +17,22 @@ export function image(id: string): HTMLImageElement | null {
   return null;
 }
 
+const unitImages = new Map<string, HTMLImageElement>();
+const unitPending = new Set<string>();
+
+/** Large battle sprite for a unit (force member id or enemy type id); null until loaded / if missing. */
+export function unitImage(id: string): HTMLImageElement | null {
+  const img = unitImages.get(id);
+  if (img) return img;
+  if (!unitPending.has(id)) {
+    unitPending.add(id);
+    const el = new Image();
+    el.onload = () => unitImages.set(id, el);
+    el.src = `${BASE}sprites/${id}.png`;
+  }
+  return null;
+}
+
 export function preloadImages(ids: string[]): void {
   for (const id of ids) image(id);
 }

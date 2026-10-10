@@ -71,7 +71,34 @@ if (touchEl) {
 
 const DIRS: Btn[] = ['up', 'down', 'left', 'right'];
 
+// Gamepad: standard mapping (A/Cross=confirm, B/Circle=cancel, X/Square=menu, Start), d-pad and left stick.
+const padHeld = new Set<Btn>();
+function pollGamepad(): void {
+  const pads = typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
+  const gp = Array.from(pads ?? []).find((p) => p && p.connected);
+  const now = new Set<Btn>();
+  if (gp) {
+    const b = (i: number) => !!gp.buttons[i]?.pressed;
+    if (b(0)) now.add('a');
+    if (b(1)) now.add('b');
+    if (b(2) || b(3)) now.add('c');
+    if (b(9)) now.add('start');
+    if (b(12) || (gp.axes[1] ?? 0) < -0.5) now.add('up');
+    if (b(13) || (gp.axes[1] ?? 0) > 0.5) now.add('down');
+    if (b(14) || (gp.axes[0] ?? 0) < -0.5) now.add('left');
+    if (b(15) || (gp.axes[0] ?? 0) > 0.5) now.add('right');
+  }
+  for (const k of now) if (!padHeld.has(k)) down(k);
+  for (const k of padHeld) if (!now.has(k)) up(k);
+  padHeld.clear();
+  for (const k of now) padHeld.add(k);
+}
+
 export const input = {
+  /** Call once per frame before updating scenes. */
+  poll(): void {
+    pollGamepad();
+  },
   held: (b: Btn): boolean => held.has(b),
   pressed: (b: Btn): boolean => pressed.has(b),
   released: (b: Btn): boolean => released.has(b),

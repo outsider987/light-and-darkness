@@ -35,6 +35,18 @@ while (Date.now() - t0 < 15000 && !shot) {
   await page.waitForTimeout(40);
 }
 console.log('cutscene shot:', shot, 'music now:', await ev(() => ({ playing: window.lad.audio.playing, streamNodes: window.lad.audio.streamNodes?.length, seqTimer: window.lad.audio.timer !== null })));
+// spell cutscene: Tao casts Blaze on the goblin
+await ev(() => { const s = window.lad.scenes.top; const tao = s.units.find((u) => u.id === 'tao'); const e = s.units.find((u) => u.team === 'enemy' && u.alive); tao.mp = 20; s.runner.stop(); window.lad.dialog.close(); window.lad.widgets.length = 0; s.runner.start(s.castSpell(tao, window.lad.SPELLS.blaze, 1, e.x, e.y)); });
+{
+  const t1 = Date.now(); let shot2 = false;
+  while (Date.now() - t1 < 15000 && !shot2) {
+    const st = await ev(() => ({ eff: !!window.lad.scenes.top?.anim?.effect, t: window.lad.scenes.top?.anim?.effect?.t ?? 0, waiting: window.lad.dialog.waiting }));
+    if (st.eff && st.t >= 12) { await page.screenshot({ path: `${out}/spell.png` }); shot2 = true; break; }
+    if (st.waiting) await tap('KeyZ');
+    await page.waitForTimeout(30);
+  }
+  console.log('spell shot:', shot2);
+}
 // ending screen with art
 await ev(() => { const g = window.lad.newGame(); window.lad.director.ending(g); });
 await page.waitForTimeout(2500);
@@ -44,7 +56,7 @@ const py = `
 from PIL import Image
 import glob, os, sys
 out = sys.argv[1]
-fs = [os.path.join(out, n + '.png') for n in ['title', 'opening', 'cutscene', 'ending'] if os.path.exists(os.path.join(out, n + '.png'))]
+fs = [os.path.join(out, n + '.png') for n in ['title', 'cutscene', 'spell', 'ending'] if os.path.exists(os.path.join(out, n + '.png'))]
 ims = [Image.open(f).resize((480, 360)) for f in fs]
 sheet = Image.new('RGB', (960, 720), 'black')
 for i, im in enumerate(ims): sheet.paste(im, ((i % 2) * 480, (i // 2) * 360))

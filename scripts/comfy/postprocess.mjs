@@ -29,6 +29,46 @@ for name, prefix in [('title', 'title-art_*.png'), ('ending', 'ending-art_*.png'
         print(name)
 `;
 execFileSync('python3', ['-c', py, 'assets-src/bg', 'public/bg'], { stdio: 'inherit' });
+
+// Battle sprites: key out the flat magenta background, trim, scale to 104px tall.
+const pySprites = `
+import sys, glob, os
+from PIL import Image
+src, dst = sys.argv[1], sys.argv[2]
+os.makedirs(dst, exist_ok=True)
+H = 104
+for f in sorted(glob.glob(os.path.join(src, '*.png'))):
+    name = os.path.basename(f)
+    if name.endswith('.ref.png') or name.startswith('exp-'): continue
+    im = Image.open(f).convert('RGBA')
+    px = im.load()
+    w, h = im.size
+    # magenta key with tolerance; also soften edge pixels that blend toward magenta
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            d = abs(r - 255) + g + abs(b - 255)
+            if d < 90: px[x, y] = (0, 0, 0, 0)
+            elif d < 170 and g < 90:
+                # edge blend: keep color, reduce alpha
+                px[x, y] = (r, g, b, int(255 * min(1.0, (d - 90) / 80)))
+    bbox = im.getbbox()
+    if not bbox: continue
+    im = im.crop(bbox)
+    # remove stray magenta fringe by desaturating leftover magenta-ish pixels
+    px = im.load()
+    for y in range(im.size[1]):
+        for x in range(im.size[0]):
+            r, g, b, a = px[x, y]
+            if a and r > 180 and b > 180 and g < 110:
+                px[x, y] = (int((r + g) / 2), g, int((b + g) / 2), a)
+    scale = H / im.size[1]
+    nw = max(8, int(im.size[0] * scale))
+    im = im.resize((nw, H), Image.LANCZOS)
+    im.save(os.path.join(dst, name), optimize=True)
+    print('sprite', name[:-4], nw)
+`;
+if (fs.existsSync('assets-src/sprites')) execFileSync('python3', ['-c', pySprites, 'assets-src/sprites', 'public/sprites'], { stdio: 'inherit' });
 fs.mkdirSync('public/music', { recursive: true });
 for (const f of fs.existsSync('assets-src/music') ? fs.readdirSync('assets-src/music') : []) {
   if (!f.endsWith('.mp3')) continue;

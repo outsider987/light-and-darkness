@@ -15,6 +15,11 @@ import './game/data/content';
 import type { GameState } from './game/types';
 import { newGame, joinForce } from './game/state';
 import { LOCATIONS } from './game/data/locations';
+import { CHARACTERS } from './game/data/characters';
+import { ENEMIES } from './game/data/enemies';
+import { SPELLS } from './game/data/spells';
+import { unitSprite } from './game/sprites';
+import type { SpriteSpec, Dir } from './game/types';
 import { widgets, dialog } from './game/ui';
 import { BASE, BACKDROP_IDS, MUSIC_IDS, preloadImages } from './engine/assets';
 
@@ -67,6 +72,7 @@ function loop(now: number): void {
   last = now;
   let steps = 0;
   const maxSteps = 3 * speed.value;
+  input.poll();
   while (acc >= STEP && steps < maxSteps) {
     scenes.update();
     input.endFrame();
@@ -109,6 +115,20 @@ async function start(): Promise<void> {
   joinForce,
   LOCATIONS,
   BATTLES,
+  CHARACTERS,
+  ENEMIES,
+  SPELLS,
+  /** Render a unit sprite to a data URL (used by the asset pipeline). */
+  sprite(spec: SpriteSpec, dir: Dir = 'right', scale = 8): string {
+    const src = unitSprite(spec, dir, 0);
+    const c = document.createElement('canvas');
+    c.width = src.width * scale;
+    c.height = src.height * scale;
+    const cx = c.getContext('2d')!;
+    cx.imageSmoothingEnabled = false;
+    cx.drawImage(src, 0, 0, c.width, c.height);
+    return c.toDataURL('image/png');
+  },
   widgets,
   dialog,
   speed,
