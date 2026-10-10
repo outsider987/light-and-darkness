@@ -1139,7 +1139,7 @@ export class BattleScene implements Scene {
         drawUnitPanel(u, W - 136, py);
       }
     }
-    if (this.statusUnit) drawFullStatus(this.statusUnit, 60, 40);
+    if (this.statusUnit) drawFullStatus(this.statusUnit, 42, 40);
     if (this.banner) {
       win(W / 2 - 60, 8, 120, 22);
       textCenter(this.banner.txt, W / 2, 15, C.yellow);

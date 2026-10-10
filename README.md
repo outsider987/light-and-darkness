@@ -71,3 +71,9 @@ src/game/
 ## 版權聲明
 
 Shining Force 為 SEGA 之商標。本專案為非商業粉絲重製，未含任何自原版遊戲擷取之程式、圖像、音樂或文字；所有素材皆由本專案程式生成。程式碼以 MIT 授權釋出。
+
+---
+
+## English summary
+
+A complete fan remake of SEGA's 1992 Mega Drive tactical RPG *Shining Force* for the browser (TypeScript + Canvas, no runtime dependencies). All eight chapters, 23 battles, 30 recruitable members, promotion, shops, church, headquarters, the Colossus and Chaos war-machine bosses, and the Dark Dragon finale. Every sprite and tile is drawn by code; the painted battle backdrops, large battle sprites, soundtrack and sound effects were generated locally with ComfyUI (Qwen Image 2.1, ACE-Step 1.5, Stable Audio 3) and are optional at runtime. Play it at https://outsider987.github.io/light-and-darkness/ . Shining Force is a trademark of SEGA; this is a non-commercial fan project that contains no original game assets.

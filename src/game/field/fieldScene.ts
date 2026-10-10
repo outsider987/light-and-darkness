@@ -290,7 +290,7 @@ export class FieldScene implements Scene {
       const r = yield* choose(items, { x: 8, y: 8, title: 'Members', maxRows: 10 });
       if (r === -1) return;
       const u = units[r];
-      const win_ = { draw: () => drawFullStatus(u, 60, 40) };
+      const win_ = { draw: () => drawFullStatus(u, 42, 40) };
       addWidget(win_);
       yield 1;
       while (!(input.ok() || input.cancel())) yield 1;
@@ -602,7 +602,7 @@ export class FieldScene implements Scene {
           const mr = yield* choose(items, { x: 8, y: 8, title: 'Members', maxRows: 10 });
           if (mr === -1) continue;
           const u = units[mr];
-          const w_ = { draw: () => drawFullStatus(u, 60, 40) };
+          const w_ = { draw: () => drawFullStatus(u, 42, 40) };
           addWidget(w_);
           yield 1;
           while (!(input.ok() || input.cancel())) yield 1;

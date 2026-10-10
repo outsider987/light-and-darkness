@@ -6,6 +6,7 @@ import type { Co } from '../engine/co';
 import type { Unit } from './types';
 import { unitClass, effAtt, effDef, effAgi, effMov } from './state';
 import { ENEMIES } from './data/enemies';
+import { item as itemDef } from './data/items';
 
 export interface Widget {
   draw(): void;
@@ -319,11 +320,11 @@ export function drawUnitPanel(u: Unit, x: number, y: number): void {
 }
 
 export function drawFullStatus(u: Unit, x: number, y: number): void {
-  const w = 200, h = 150;
+  const w = 236, h = 150;
   win(x, y, w, h);
   const cls = unitClass(u);
   text(u.name, x + 10, y + 8, C.yellow);
-  text(`${cls.abbr}  L${u.level}`, x + 110, y + 8);
+  text(`${cls.abbr}  L${u.level}`, x + 126, y + 8);
   const rows: [string, string][] = [
     ['HP', `${u.hp}/${u.maxHp}`],
     ['MP', `${u.mp}/${u.maxMp}`],
@@ -337,16 +338,26 @@ export function drawFullStatus(u: Unit, x: number, y: number): void {
     text(k, x + 10, y + 24 + i * 12, C.gray);
     text(v, x + 50, y + 24 + i * 12);
   });
-  text(cls.name, x + 110, y + 24, C.cyan);
+  text(cls.name, x + 126, y + 24, C.cyan);
   let sy = y + 40;
-  text('MAGIC', x + 110, sy, C.gray);
+  text('MAGIC', x + 126, sy, C.gray);
   sy += 12;
   if (u.spells.length === 0) { text('-', x + 110, sy); sy += 12; }
-  for (const sp of u.spells.slice(0, 5)) {
-    text(`${sp.spell[0].toUpperCase()}${sp.spell.slice(1)} ${sp.level}`, x + 110, sy);
+  for (const sp of u.spells.slice(0, 4)) {
+    text(`${sp.spell[0].toUpperCase()}${sp.spell.slice(1)} ${sp.level}`, x + 126, sy);
     sy += 12;
   }
-  if (u.poison) text('Poisoned', x + 110, y + 118, C.green);
+  // items (E = equipped), as on the original status screen
+  let iy = y + 112;
+  text('ITEMS', x + 10, iy, C.gray);
+  iy += 12;
+  if (u.items.length === 0) text('-', x + 10, iy);
+  u.items.forEach((id, i) => {
+    const eq = i === u.equipWeapon || i === u.equipRing;
+    const nm = itemDef(id).name;
+    text(`${eq ? 'E' : ' '}${nm.length > 12 ? nm.slice(0, 12) : nm}`, x + 10 + (i % 2) * 112, iy + Math.floor(i / 2) * 12, eq ? C.yellow : C.white);
+  });
+  if (u.poison) text('PSN', x + 200, y + 8, C.green);
 }
 
 /** Small top-left window such as "Land effect 30%". */
