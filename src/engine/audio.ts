@@ -103,21 +103,32 @@ class AudioEngine {
     for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
   }
 
-  private async loadBuffer(id: string): Promise<AudioBuffer | null> {
-    if (this.buffers.has(id)) return this.buffers.get(id)!;
+  private loading = new Map<string, Promise<AudioBuffer | null>>();
+
+  private loadBuffer(id: string): Promise<AudioBuffer | null> {
+    const have = this.buffers.get(id);
+    if (have) return Promise.resolve(have);
+    const inflight = this.loading.get(id);
+    if (inflight) return inflight;
     const url = this.streams[id];
-    if (!url || !this.ctx) return null;
-    this.buffers.set(id, null);
-    try {
-      const r = await fetch(url);
-      if (!r.ok) return null;
-      const data = await r.arrayBuffer();
-      const buf = await this.ctx.decodeAudioData(data);
-      this.buffers.set(id, buf);
-      return buf;
-    } catch {
-      return null;
-    }
+    if (!url || !this.ctx) return Promise.resolve(null);
+    const ctx = this.ctx;
+    const p = (async () => {
+      try {
+        const r = await fetch(url);
+        if (!r.ok) return null;
+        const data = await r.arrayBuffer();
+        const buf = await ctx.decodeAudioData(data);
+        this.buffers.set(id, buf);
+        return buf;
+      } catch {
+        return null;
+      } finally {
+        this.loading.delete(id);
+      }
+    })();
+    this.loading.set(id, p);
+    return p;
   }
 
   preloadStreams(ids: string[]): void {
@@ -217,15 +228,13 @@ class AudioEngine {
         this.playStream(id, buf, loop);
         return;
       }
-      if (buf === undefined) {
-        // decode in the background; play the sequencer meanwhile if available, then switch over
-        void this.loadBuffer(id).then((b) => {
-          if (b && this.current === id) {
-            this.stopSequencer();
-            this.playStream(id, b, loop);
-          }
-        });
-      }
+      // decode in the background; play the sequencer meanwhile if available, then switch over
+      void this.loadBuffer(id).then((b) => {
+        if (b && this.current === id && this.streamNodes.length === 0) {
+          this.stopSequencer();
+          this.playStream(id, b, loop);
+        }
+      });
       if (!this.songs[id]) return;
     }
     const song = this.songs[id];

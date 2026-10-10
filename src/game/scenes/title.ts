@@ -14,17 +14,18 @@ import { CHARACTERS } from '../data/characters';
 import { image } from '../../engine/assets';
 
 const OPENING = [
-  'Long ago, the forces of Light and Darkness',
-  'fought a war that shook the world of Rune.',
+  'Long ago, the forces of Light and',
+  'Darkness fought a war that shook',
+  'the world of Rune.',
   '',
-  'The Dark Dragon was sealed away by the',
-  'Ancients, and peace returned to the land.',
+  'The Dark Dragon was sealed away by',
+  'the Ancients, and peace returned.',
   '',
   'A thousand years have passed.',
   '',
   'Now the kingdom of Runefaust marches',
   'across the land, seeking the Gate of',
-  'the Ancients to awaken the Dark Dragon...',
+  'the Ancients, to wake the Dark Dragon.',
   '',
   'In the small kingdom of Guardiana,',
   'a young swordsman is about to begin',
