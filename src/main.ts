@@ -20,22 +20,25 @@ import { ENEMIES } from './game/data/enemies';
 import { SPELLS } from './game/data/spells';
 import { unitSprite } from './game/sprites';
 import type { SpriteSpec, Dir } from './game/types';
-import { widgets, dialog } from './game/ui';
-import { BASE, BACKDROP_IDS, MUSIC_IDS, preloadImages } from './engine/assets';
+import { widgets, dialog, textVars } from './game/ui';
+import { BASE, BACKDROP_IDS, MUSIC_IDS, SFX_IDS, preloadImages } from './engine/assets';
 
 let current: GameState | null = null;
 
 audio.register(SONGS);
 audio.registerStreams(Object.fromEntries(MUSIC_IDS.map((id) => [id, `${BASE}music/${id}.mp3`])));
+audio.registerStreams(Object.fromEntries(SFX_IDS.map((id) => ['sfx:' + id, `${BASE}sfx/${id}.mp3`])));
 audio.init();
-audio.preloadStreams(['title', 'opening', 'town', 'battle']);
+audio.preloadStreams(['title', 'opening', 'town', 'battle', 'levelup', 'victory', ...SFX_IDS.map((id) => 'sfx:' + id)]);
 preloadImages(BACKDROP_IDS);
 director.enterLocation = (g, loc, x, y, dir) => {
   current = g;
+  textVars.hero = g.force.find((u) => u.isHero)?.name ?? 'Max';
   scenes.replace(new FieldScene(g, loc, x, y, dir));
 };
 director.startBattle = (g, id) => {
   current = g;
+  textVars.hero = g.force.find((u) => u.isHero)?.name ?? 'Max';
   const def = BATTLES[id];
   if (!def) throw new Error('Unknown battle ' + id);
   scenes.replace(new BattleScene(g, def));

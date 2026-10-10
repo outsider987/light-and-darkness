@@ -64,6 +64,11 @@ console.log('scene:', await sceneName());
 await tap('Enter');
 await page.waitForTimeout(600);
 for (let i = 0; i < 25; i++) await tap('KeyZ', 1, 120);
+// hero name entry: type "Max" is the default; move to END and confirm
+await waitFor(() => window.lad.widgets[window.lad.widgets.length - 1]?.kind === 'name', 20000, 'name entry');
+await shot('01b-name-entry');
+await ev(() => { const e = window.lad.widgets[window.lad.widgets.length - 1]; e.cy = 4; e.cx = 12; });
+await tap('KeyZ');
 await waitFor(() => window.lad.scenes.top?.kind === 'field', 20000, 'field');
 await page.waitForTimeout(400);
 await shot('02-chapter-card');

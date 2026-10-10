@@ -38,4 +38,5 @@ export function preloadImages(ids: string[]): void {
 }
 
 export const BACKDROP_IDS = ['grass', 'forest', 'hills', 'water', 'sea', 'castle', 'cave', 'ruins', 'wasteland', 'lava', 'throne', 'tower', 'title', 'ending'];
+export const SFX_IDS = ['hit', 'crit', 'miss', 'fire', 'ice', 'bolt', 'heal', 'death', 'door', 'gold', 'egress', 'magic'];
 export const MUSIC_IDS = ['title', 'opening', 'town', 'hq', 'church', 'dungeon', 'battle', 'boss', 'victory', 'levelup', 'gameover', 'sea', 'castle', 'dark', 'ending'];

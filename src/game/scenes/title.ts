@@ -12,6 +12,8 @@ import { director } from '../director';
 import { unitSprite } from '../sprites';
 import { CHARACTERS } from '../data/characters';
 import { image } from '../../engine/assets';
+import { NameEntry, drawWidgets } from '../ui';
+import { hero } from '../state';
 
 const OPENING = [
   'Long ago, the forces of Light and',
@@ -41,7 +43,7 @@ export class TitleScene implements Scene {
   menuOn = false;
   canContinue = false;
   openingLines: string[] = [];
-  mode: 'title' | 'opening' = 'title';
+  mode: 'title' | 'opening' | 'name' = 'title';
 
   enter(): void {
     this.canContinue = hasSave();
@@ -98,6 +100,13 @@ export class TitleScene implements Scene {
     yield 40;
     yield* fadeOut(30);
     const g = newGame();
+    // hero naming, as in the original
+    this.mode = 'name';
+    fade.alpha = 0;
+    const entry = new NameEntry('Max');
+    const name = yield* entry.run();
+    hero(g).name = name.trim() || 'Max';
+    yield* fadeOut(20);
     const ch = CHAPTERS[0];
     director.enterLocation(g, ch.start.location, ch.start.x, ch.start.y, 'up');
   }
@@ -110,6 +119,12 @@ export class TitleScene implements Scene {
   draw(): void {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, W, H);
+    if (this.mode === 'name') {
+      const art = image('title');
+      if (art) { ctx.globalAlpha = 0.3; ctx.drawImage(art, 0, 0, W, H); ctx.globalAlpha = 1; }
+      drawWidgets();
+      return;
+    }
     if (this.mode === 'opening') {
       const art = image('title');
       if (art) {

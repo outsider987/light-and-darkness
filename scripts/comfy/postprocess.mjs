@@ -69,6 +69,12 @@ for f in sorted(glob.glob(os.path.join(src, '*.png'))):
     print('sprite', name[:-4], nw)
 `;
 if (fs.existsSync('assets-src/sprites')) execFileSync('python3', ['-c', pySprites, 'assets-src/sprites', 'public/sprites'], { stdio: 'inherit' });
+fs.mkdirSync('public/sfx', { recursive: true });
+for (const f of fs.existsSync('assets-src/sfx') ? fs.readdirSync('assets-src/sfx') : []) {
+  if (!f.endsWith('.mp3')) continue;
+  fs.copyFileSync(path.join('assets-src/sfx', f), path.join('public/sfx', f));
+  console.log('sfx', f);
+}
 fs.mkdirSync('public/music', { recursive: true });
 for (const f of fs.existsSync('assets-src/music') ? fs.readdirSync('assets-src/music') : []) {
   if (!f.endsWith('.mp3')) continue;

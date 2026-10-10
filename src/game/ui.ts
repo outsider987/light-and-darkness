@@ -5,12 +5,15 @@ import { audio } from '../engine/audio';
 import type { Co } from '../engine/co';
 import type { Unit } from './types';
 import { unitClass, effAtt, effDef, effAgi, effMov } from './state';
+import { ENEMIES } from './data/enemies';
 
 export interface Widget {
   draw(): void;
 }
 
 export const widgets: Widget[] = [];
+/** Text substitutions applied to every dialog line (the hero's chosen name replaces "Max"). */
+export const textVars = { hero: 'Max' };
 export function addWidget(w: Widget): void {
   widgets.push(w);
 }
@@ -43,6 +46,7 @@ class DialogBox implements Widget {
   *say(txt: string): Co<void> {
     this.active = true;
     if (!widgets.includes(this)) addWidget(this);
+    if (textVars.hero !== 'Max') txt = txt.replace(/\bMax\b/g, textVars.hero);
     const all = wrap(txt, DLG.cols);
     this.pages = [];
     for (let i = 0; i < all.length; i += DLG.rows) this.pages.push(all.slice(i, i + DLG.rows));
@@ -304,7 +308,7 @@ export class RadialMenu implements Widget {
 export function drawUnitPanel(u: Unit, x: number, y: number): void {
   const w = 128, h = 46;
   win(x, y, w, h);
-  const cls = u.team === 'force' ? unitClass(u).abbr : (u.defId ? u.name.slice(0, 4).toUpperCase() : 'ENMY');
+  const cls = u.team === 'force' ? unitClass(u).abbr : (ENEMIES[u.defId ?? u.id]?.abbr ?? 'ENMY');
   text(u.name, x + 8, y + 7, u.team === 'force' ? C.white : C.orange);
   text(`${cls} L${u.level}`, x + w - 8 - (cls.length + 2 + String(u.level).length) * CH, y + 7, C.gray);
   text(`HP ${String(u.hp).padStart(3)}/${String(u.maxHp).padStart(3)}`, x + 8, y + 20, u.hp <= u.maxHp / 4 ? C.red : C.white);
@@ -350,4 +354,66 @@ export function drawInfoBox(txt: string, x = 8, y = 8): void {
   const w = txt.length * CH + 16;
   win(x, y, w, 20);
   text(txt, x + 8, y + 6);
+}
+
+// ---- Name entry (hero naming at the start, as in the original) ------------------
+
+const NAME_ROWS = ['ABCDEFGHIJKLM', 'NOPQRSTUVWXYZ', 'abcdefghijklm', 'nopqrstuvwxyz'];
+
+export class NameEntry implements Widget {
+  kind = 'name';
+  cx = 0;
+  cy = 0;
+  constructor(public value: string, public maxLen = 8) {}
+  *run(): Co<string> {
+    addWidget(this);
+    try {
+      yield 1;
+      for (;;) {
+        const d = input.dir();
+        const cols = NAME_ROWS[0].length;
+        const rows = NAME_ROWS.length + 1; // last row: BACK / END
+        if (d === 'left') { this.cx = (this.cx - 1 + cols) % cols; audio.sfx('cursor'); }
+        if (d === 'right') { this.cx = (this.cx + 1) % cols; audio.sfx('cursor'); }
+        if (d === 'up') { this.cy = (this.cy - 1 + rows) % rows; audio.sfx('cursor'); }
+        if (d === 'down') { this.cy = (this.cy + 1) % rows; audio.sfx('cursor'); }
+        if (input.ok()) {
+          if (this.cy === NAME_ROWS.length) {
+            if (this.cx < cols / 2) { this.value = this.value.slice(0, -1); audio.sfx('cancel'); }
+            else if (this.value.length > 0) { audio.sfx('ok'); return this.value; }
+            else audio.sfx('error');
+          } else if (this.value.length < this.maxLen) {
+            this.value += NAME_ROWS[this.cy][this.cx];
+            audio.sfx('ok');
+          } else audio.sfx('error');
+        }
+        if (input.cancel()) { this.value = this.value.slice(0, -1); audio.sfx('cancel'); }
+        if (input.pressed('start') && this.value.length > 0) return this.value;
+        yield 1;
+      }
+    } finally {
+      removeWidget(this);
+    }
+  }
+  draw(): void {
+    const x = 36, y = 40, w = 248, h = 150;
+    win(x, y, w, h);
+    text('Enter the name of the hero.', x + 12, y + 8, C.yellow);
+    const shown = this.value.padEnd(this.maxLen, '_');
+    text(shown, x + 12 + 7 * CH, y + 26, C.white);
+    const gx = x + 20, gy = y + 48;
+    NAME_ROWS.forEach((row, r) => {
+      for (let c = 0; c < row.length; c++) {
+        const sel = this.cy === r && this.cx === c;
+        if (sel) { ctx.fillStyle = C.yellow; ctx.fillRect(gx + c * 16 - 2, gy + r * 16 - 2, 12, 12); }
+        text(row[c], gx + c * 16, gy + r * 16, sel ? C.black : C.white, !sel);
+      }
+    });
+    const lr = NAME_ROWS.length;
+    const back = this.cy === lr && this.cx < NAME_ROWS[0].length / 2;
+    const end = this.cy === lr && !back;
+    text('BACK', gx, gy + lr * 16 + 4, back ? C.yellow : C.white);
+    text('END', gx + 7 * 16, gy + lr * 16 + 4, end ? C.yellow : C.white);
+    if (this.cy === lr) hand(back ? gx - 10 : gx + 7 * 16 - 10, gy + lr * 16 + 4);
+  }
 }

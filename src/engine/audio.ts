@@ -361,7 +361,33 @@ class AudioEngine {
     s.stop(t + dur);
   }
 
+  /** Play a short streamed track (jingle) over the current music without stopping it. Falls back to a synth sfx. */
+  oneShot(id: string, fallbackSfx: string): void {
+    const play = (buf: AudioBuffer | null) => {
+      if (!buf || !this.ctx || !this.musicGain || this.ctx.state !== 'running') { this.sfx(fallbackSfx); return; }
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(this.musicGain);
+      src.start();
+    };
+    const have = this.buffers.get(id);
+    if (have) play(have);
+    else if (this.streams[id]) void this.loadBuffer(id).then(play);
+    else this.sfx(fallbackSfx);
+  }
+
   sfx(name: string): void {
+    const buf = this.buffers.get('sfx:' + name);
+    if (buf && this.ctx && this.master && this.ctx.state === 'running') {
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      const g = this.ctx.createGain();
+      g.gain.value = 0.9;
+      src.connect(g);
+      g.connect(this.master);
+      src.start();
+      return;
+    }
     switch (name) {
       case 'cursor': this.tone(1200, 1200, 0.04, 'square', 0.18); break;
       case 'ok': this.tone(900, 900, 0.05, 'square', 0.2); this.tone(1400, 1400, 0.07, 'square', 0.2, 0.05); break;

@@ -836,7 +836,7 @@ export class BattleScene implements Scene {
     yield* sayKeep(`${u.name} gained ${exp} EXP.`);
     const lr = addExp(u, exp);
     if (lr) {
-      audio.sfx('levelup');
+      audio.oneShot('levelup', 'levelup');
       const g = lr.gains;
       const parts: string[] = [];
       if (g.hp) parts.push(`HP+${g.hp}`);
@@ -1188,12 +1188,14 @@ export class BattleScene implements Scene {
       for (let i = 0; i < 6; i++) rect(10 + i * 56, 104 - (i % 3) * 6, 30, 16 + (i % 3) * 6, shade(groundFor(cs.terrainL), -30));
     }
     const scale = 3;
-    const BIG_H = 104;
     const groundY = 128;
     const imgL = unitImage(cs.left.team === 'force' ? cs.left.id : cs.left.defId ?? cs.left.id);
     const imgR = unitImage(cs.right.team === 'force' ? cs.right.id : cs.right.defId ?? cs.right.id);
-    const wL = imgL ? Math.round(imgL.width * (BIG_H / imgL.height)) : TILE * scale;
-    const wR = imgR ? Math.round(imgR.width * (BIG_H / imgR.height)) : TILE * scale;
+    const hL = cs.left.boss ? 124 : 104;
+    const hR = cs.right.boss ? 124 : 104;
+    const BIG_H = Math.max(hL, hR);
+    const wL = imgL ? Math.round(imgL.width * (hL / imgL.height)) : TILE * scale;
+    const wR = imgR ? Math.round(imgR.width * (hR / imgR.height)) : TILE * scale;
     const lx = 70 + cs.lungeL + (cs.shakeL > 0 ? (cs.shakeL % 2 ? 3 : -3) : 0);
     const rx = W - 70 - wR + cs.lungeR + (cs.shakeR > 0 ? (cs.shakeR % 2 ? 3 : -3) : 0);
     const af = Math.floor(cs.t / 20) % 2;
@@ -1202,14 +1204,14 @@ export class BattleScene implements Scene {
     ctx.fillRect(lx + 6, groundY - 3, wL - 12, 4);
     ctx.fillRect(rx + 6, groundY - 3, wR - 12, 4);
     ctx.globalAlpha = cs.shakeL > 0 && cs.shakeL % 4 < 2 ? 0.4 : 1;
-    if (imgL) ctx.drawImage(imgL, lx, groundY - BIG_H + (af ? 1 : 0), wL, BIG_H);
+    if (imgL) ctx.drawImage(imgL, lx, groundY - hL + (af ? 1 : 0), wL, hL);
     else blitScaled(unitSprite(cs.left.sprite, 'right', af), lx, groundY - TILE * scale, scale);
     ctx.globalAlpha = cs.shakeR > 0 && cs.shakeR % 4 < 2 ? 0.4 : 1;
     if (imgR) {
       ctx.save();
-      ctx.translate(rx + wR, groundY - BIG_H + (af ? 1 : 0));
+      ctx.translate(rx + wR, groundY - hR + (af ? 1 : 0));
       ctx.scale(-1, 1);
-      ctx.drawImage(imgR, 0, 0, wR, BIG_H);
+      ctx.drawImage(imgR, 0, 0, wR, hR);
       ctx.restore();
     } else blitScaled(unitSprite(cs.right.sprite, 'left', af), rx, groundY - TILE * scale, scale);
     ctx.globalAlpha = 1;
