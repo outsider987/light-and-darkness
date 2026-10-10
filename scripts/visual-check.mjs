@@ -47,6 +47,21 @@ await ev(() => { const s = window.lad.scenes.top; const tao = s.units.find((u) =
   }
   console.log('spell shot:', shot2);
 }
+// boss cutscene: Max attacks the Colossus at the Runefaust castle gate
+await ev(() => { const g = window.lad.newGame(); for (const u of g.force) { u.att = 60; u.maxHp = u.hp = 120; } window.lad.director.startBattle(g, 'b20'); });
+await page.waitForTimeout(800);
+for (let i = 0; i < 8; i++) await tap('KeyZ', 1, 250);
+await ev(() => { const s = window.lad.scenes.top; const max = s.units[0]; const boss = s.units.find((u) => u.boss); max.x = boss.x; max.y = boss.y + 1; s.runner.stop(); window.lad.dialog.close(); window.lad.widgets.length = 0; s.runner.start(s.doAttack(max, boss)); });
+{
+  const t1 = Date.now(); let shot3 = false;
+  while (Date.now() - t1 < 15000 && !shot3) {
+    const st = await ev(() => ({ anim: !!window.lad.scenes.top?.anim, waiting: window.lad.dialog.waiting }));
+    if (st.anim && st.waiting) { await page.screenshot({ path: `${out}/boss.png` }); shot3 = true; break; }
+    if (st.waiting) await tap('KeyZ');
+    await page.waitForTimeout(30);
+  }
+  console.log('boss shot:', shot3);
+}
 // ending screen with art
 await ev(() => { const g = window.lad.newGame(); window.lad.director.ending(g); });
 await page.waitForTimeout(2500);
@@ -56,7 +71,7 @@ const py = `
 from PIL import Image
 import glob, os, sys
 out = sys.argv[1]
-fs = [os.path.join(out, n + '.png') for n in ['title', 'cutscene', 'spell', 'ending'] if os.path.exists(os.path.join(out, n + '.png'))]
+fs = [os.path.join(out, n + '.png') for n in ['cutscene', 'spell', 'boss', 'ending'] if os.path.exists(os.path.join(out, n + '.png'))]
 ims = [Image.open(f).resize((480, 360)) for f in fs]
 sheet = Image.new('RGB', (960, 720), 'black')
 for i, im in enumerate(ims): sheet.paste(im, ((i % 2) * 480, (i // 2) * 360))
