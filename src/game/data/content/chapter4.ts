@@ -2,7 +2,7 @@ import type { BattleDef, LocationDef } from '../../types';
 import { registerLocations } from '../locations';
 import { registerBattles } from '../battles';
 import { S, npc, shopkeeper, priest, nova, innkeeper, SHOP, rows } from './common';
-import { forceHasItem } from '../../state';
+import { hasItem } from '../../state';
 
 const pao: LocationDef = {
   id: 'pao',
@@ -44,7 +44,7 @@ TTTTTTTTTTT,,TTTTTTTTTTTTT
       { if: 'won:b13', then: ['Chief: Uranbatol is free! Our wagons will roll east again. Safe travels, Shining Force.'], else: ['Chief: Balbazak burned three of our wagons last month. If you take Uranbatol, Pao will never forget it.'] },
     ], { name: 'Chief' }),
     npc('egg_keeper', 16, 10, S.woman('#806040', '#d0d0d0'), [
-      { if: (g) => !!forceHasItem(g, 'domingo_egg'), then: [
+      { if: (g) => !!hasItem(g, 'domingo_egg'), then: [
         'Old woman: What a strange egg! Here, let me warm it by the fire... Oh! It is moving!',
         { takeItem: 'domingo_egg' },
         'Old woman: It hatched! What IS that thing? It is... floating. And it seems to like you.',

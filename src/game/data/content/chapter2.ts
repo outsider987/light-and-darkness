@@ -2,7 +2,7 @@ import type { BattleDef, LocationDef } from '../../types';
 import { registerLocations } from '../locations';
 import { registerBattles } from '../battles';
 import { S, npc, shopkeeper, priest, nova, innkeeper, SHOP, rows } from './common';
-import { forceHasItem } from '../../state';
+import { hasItem } from '../../state';
 
 const rindo: LocationDef = {
   id: 'rindo',
@@ -124,7 +124,7 @@ const manarina: LocationDef = {
         'Otrant: The Orb of Light will guide you through the darkness ahead. Shade Abbey lies south, on the road to Rindo.',
         'Otrant: Darksol seeks the Dark Dragon. You must reach Runefaust before he awakens it.',
       ], else: [
-        { if: (g) => !!forceHasItem(g, 'orb_of_light'), then: [
+        { if: (g) => !!hasItem(g, 'orb_of_light'), then: [
           'Otrant: You found the Orb of Light! Then you truly are the one the prophecy spoke of.',
           { takeItem: 'orb_of_light' },
           { flag: 'orb_returned' },

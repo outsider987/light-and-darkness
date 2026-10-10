@@ -30,13 +30,18 @@ const wf = (prompt, seconds, seed, prefix) => ({
 const out = 'assets-src/sfx';
 fs.mkdirSync(out, { recursive: true });
 let n = 0;
+const jobs = [];
 for (const [id, prompt] of Object.entries(sfx)) {
   const target = path.join(out, id + '.mp3');
   if (fs.existsSync(target) && !process.env.FORCE) continue;
-  const t0 = Date.now();
   const pid = await submit(wf(prompt, 2.0, 500 + n++, 'sfx-' + id));
-  const h = await waitFor(pid);
+  jobs.push({ id, pid, target });
+}
+console.log('queued', jobs.length, 'sfx jobs');
+for (const j of jobs) {
+  const t0 = Date.now();
+  const h = await waitFor(j.pid, { timeoutMs: 6 * 60 * 60 * 1000, pollMs: 4000 });
   const files = await download(h, out);
-  fs.renameSync(files[0], target);
-  console.log(id, ((Date.now() - t0) / 1000).toFixed(0) + 's', fs.statSync(target).size);
+  fs.renameSync(files[0], j.target);
+  console.log(j.id, ((Date.now() - t0) / 1000).toFixed(0) + 's', fs.statSync(j.target).size);
 }

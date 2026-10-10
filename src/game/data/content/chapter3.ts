@@ -2,7 +2,7 @@ import type { BattleDef, LocationDef } from '../../types';
 import { registerLocations } from '../locations';
 import { registerBattles } from '../battles';
 import { S, npc, shopkeeper, priest, nova, innkeeper, SHOP, rows } from './common';
-import { forceHasItem } from '../../state';
+import { hasItem } from '../../state';
 
 const bustoke: LocationDef = {
   id: 'bustoke',
@@ -49,7 +49,7 @@ M....#kFk#.....,.#####...^^M
       { if: 'zylo_cured', then: [
         { if: 'won:b9', then: ['Elder: The pass is open. Beyond the mountains lies the prairie where Pao, the wandering town, roams.'], else: ['Elder: Runefaust holds the mountain pass to the north. With Zylo at your side, you may break through.'] },
       ], else: [
-        { if: (g) => !!forceHasItem(g, 'lunar_dew'), then: [
+        { if: (g) => !!hasItem(g, 'lunar_dew'), then: [
           'Elder: Lunar Dew! You found it in the quarry! Quickly, give it to the poor creature.',
           { takeItem: 'lunar_dew' },
           { flag: 'zylo_cured' },

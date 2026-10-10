@@ -227,6 +227,11 @@ export function forceHasItem(g: GameState, id: string): Unit | undefined {
   return g.force.find((u) => u.items.includes(id));
 }
 
+/** True if any member carries the item or it is in HQ storage (key items sent there when hands were full). */
+export function hasItem(g: GameState, id: string): boolean {
+  return !!forceHasItem(g, id) || g.depot.includes(id);
+}
+
 export function takeFromForce(g: GameState, id: string): boolean {
   const u = forceHasItem(g, id);
   if (!u) return false;

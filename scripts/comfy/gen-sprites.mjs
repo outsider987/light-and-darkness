@@ -70,6 +70,8 @@ const units = await page.evaluate(() => {
   for (const [id, e] of Object.entries(window.lad.ENEMIES)) out.push({ id, name: e.name, spec: e.sprite, team: 'enemy' });
   return out;
 });
+// Bulk mode: upload all references and queue every job first (FIFO fairness on a shared ComfyUI), then collect.
+const jobs = [];
 let n = 0;
 for (const u of units) {
   if (only.length && !only.includes(u.id)) continue;
@@ -81,12 +83,16 @@ for (const u of units) {
   const refName = await uploadImage(`lad-ref-${u.id}.png`, buf);
   const desc = describe(u.name, u.spec);
   const prompt = `Redraw the character shown in the reference image as a detailed 16-bit SEGA Genesis JRPG battle sprite, keeping the same character design and colors. ${desc}. Full body, side view facing right, standing battle-ready pose, centered, chunky pixel art with clean dark outlines, the whole figure visible with margin, isolated on a solid flat bright magenta background (#FF00FF), no scenery, no text.`;
-  const t0 = Date.now();
   const id = await submit(workflow({ refName, prompt, seed: 1000 + n, prefix: `sprite-${u.id}` }));
-  const h = await waitFor(id);
-  const files = await download(h, out);
-  fs.renameSync(files[0], target);
-  console.log(u.id, ((Date.now() - t0) / 1000).toFixed(0) + 's', desc);
+  jobs.push({ u, id, desc, target });
   n++;
+}
+console.log('queued', jobs.length, 'sprite jobs at', new Date().toISOString());
+for (const j of jobs) {
+  const t0 = Date.now();
+  const h = await waitFor(j.id, { timeoutMs: 6 * 60 * 60 * 1000, pollMs: 4000 });
+  const files = await download(h, out);
+  fs.renameSync(files[0], j.target);
+  console.log(j.u.id, ((Date.now() - t0) / 1000).toFixed(0) + 's', j.desc);
 }
 await browser.close();
