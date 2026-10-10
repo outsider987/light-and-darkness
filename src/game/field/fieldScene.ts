@@ -144,8 +144,28 @@ export class FieldScene implements Scene {
 
   *goTo(d: Dest): Co<void> {
     yield* fadeOut(16);
-    if ('battle' in d) director.startBattle(this.g, d.battle);
-    else director.enterLocation(this.g, d.location, d.x, d.y, d.dir ?? this.player.dir);
+    if ('battle' in d) {
+      director.startBattle(this.g, d.battle);
+      return;
+    }
+    if (d.location === this.loc.id) {
+      // same map: just move the player so a running script can continue
+      const p = this.player;
+      p.x = p.tx = d.x;
+      p.y = p.ty = d.y;
+      p.px = d.x * TILE;
+      p.py = d.y * TILE;
+      p.dir = d.dir ?? p.dir;
+      p.moving = false;
+      this.g.px = p.x;
+      this.g.py = p.y;
+      this.g.pdir = p.dir;
+      this.updateCam(true);
+      this.rebuildNpcs();
+      yield* fadeIn(16);
+      return;
+    }
+    director.enterLocation(this.g, d.location, d.x, d.y, d.dir ?? this.player.dir);
   }
 
   *chapterCard(n: number): Co<void> {

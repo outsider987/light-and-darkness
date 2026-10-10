@@ -178,14 +178,12 @@ const alterone: LocationDef = {
     if (g.flags['won:b3']) return [];
     if (g.flags.alterone_prison) return [];
     return [
+      { flag: 'alterone_prison' },
       'Soldier: Halt! You are the ones from Guardiana. King Alterone wishes to see you... immediately.',
       { warp: { location: 'alterone', x: 14, y: 5, dir: 'up' } },
       'King Alterone: So you are Max, the swordsman of Guardiana. Welcome.',
       'King Alterone: ...Forgive me. Runefaust has promised to spare my kingdom if I hand you over. Guards!',
-      { fade: 'out' },
-      { flag: 'alterone_prison' },
       { warp: { location: 'alterone', x: 7, y: 8, dir: 'down' } },
-      { fade: 'in' },
       'Lowe: A dungeon! That treacherous king sold us to Runefaust!',
       'Khris: Psst... over here. I am Khris, a priestess of this castle. The king is terrified of Darksol, but what he did is wrong.',
       'Khris: I have the key. Runefaust soldiers are already in the throne room. If you can drive them out, the king may come to his senses.',

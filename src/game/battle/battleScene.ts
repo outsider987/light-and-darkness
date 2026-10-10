@@ -892,7 +892,7 @@ export class BattleScene implements Scene {
               if (!t || t.team !== 'force') continue;
               if (sp.kind === 'damage') {
                 const d = Math.min(t.hp, L.power);
-                score += d + (L.power >= t.hp ? 25 : 0) + (t.isHero ? 5 : 0);
+                score += d + (L.power >= t.hp ? 25 : 0) + (t.isHero ? 2 : 0);
               } else if (sp.kind === 'status') score += t.immuneStatus ? 0 : 12;
               else if (sp.kind === 'debuff') score += 8;
             }
@@ -912,7 +912,7 @@ export class BattleScene implements Scene {
         const raw = Math.max(0, effAtt(u) - effDef(f));
         const le = landEffect(this.at(f.x, f.y), moveTypeOf(f));
         const dmg = Math.round(raw * (1 - le / 100));
-        let score = Math.min(f.hp, dmg) * 1.2 + (dmg >= f.hp ? 30 : 0) + (f.isHero ? 6 : 0) + (f.spells.length > 0 ? 4 : 0);
+        let score = Math.min(f.hp, dmg) * 1.2 + (dmg >= f.hp ? 30 : 0) + (f.isHero ? 2 : 0) + (f.spells.length > 0 ? 4 : 0);
         score += landEffect(this.at(r.x, r.y), mt) * 0.15 - r.cost * 0.3;
         if (!bestAtk || score > bestAtk.score) bestAtk = { tile: r, t: f, score };
       }

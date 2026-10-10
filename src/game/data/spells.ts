@@ -25,19 +25,19 @@ export const SPELLS: Record<string, SpellDef> = {
     id: 'bolt', name: 'Bolt', kind: 'damage', element: 'bolt', target: 'enemy', sfx: 'bolt', color: '#f8f060',
     desc: 'Lightning magic.',
     levels: [
-      { mp: 8, range: 2, area: 'cross', power: 22 },
-      { mp: 14, range: 3, area: 'diamond', power: 28 },
-      { mp: 20, range: 3, area: 'diamond', power: 40 },
-      { mp: 30, range: 3, area: 'diamond', power: 55 },
+      { mp: 8, range: 2, area: 'cross', power: 20 },
+      { mp: 14, range: 3, area: 'diamond', power: 26 },
+      { mp: 20, range: 3, area: 'diamond', power: 34 },
+      { mp: 30, range: 3, area: 'diamond', power: 44 },
     ],
   },
   blast: {
     id: 'blast', name: 'Blast', kind: 'damage', element: 'dark', target: 'enemy', sfx: 'bolt', color: '#c060f8',
     desc: 'Dark blast.',
     levels: [
-      { mp: 6, range: 2, area: 'cross', power: 18 },
-      { mp: 12, range: 3, area: 'diamond', power: 30 },
-      { mp: 20, range: 3, area: 'diamond', power: 45 },
+      { mp: 6, range: 2, area: 'cross', power: 16 },
+      { mp: 12, range: 3, area: 'diamond', power: 24 },
+      { mp: 20, range: 3, area: 'diamond', power: 34 },
     ],
   },
   heal: {
@@ -127,17 +127,17 @@ export const SPELLS: Record<string, SpellDef> = {
     id: 'breath', name: 'Breath', kind: 'damage', element: 'fire', target: 'enemy', sfx: 'fire', color: '#ff8030',
     desc: 'Fiery breath.',
     levels: [
-      { mp: 0, range: 2, area: 'cross', power: 20 },
-      { mp: 0, range: 2, area: 'diamond', power: 30 },
-      { mp: 0, range: 3, area: 'diamond', power: 45 },
+      { mp: 6, range: 2, area: 'cross', power: 15 },
+      { mp: 10, range: 2, area: 'diamond', power: 22 },
+      { mp: 14, range: 3, area: 'diamond', power: 30 },
     ],
   },
   demonbreath: {
     id: 'demonbreath', name: 'Demon Breath', kind: 'damage', element: 'dark', target: 'enemy', sfx: 'bolt', color: '#9040c0',
     desc: 'Breath of darkness.',
     levels: [
-      { mp: 0, range: 2, area: 'diamond', power: 35 },
-      { mp: 0, range: 3, area: 'diamond', power: 50 },
+      { mp: 12, range: 2, area: 'diamond', power: 26 },
+      { mp: 18, range: 3, area: 'diamond', power: 36 },
     ],
   },
 };

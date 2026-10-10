@@ -22,10 +22,11 @@ for f in sorted(glob.glob(os.path.join(src, 'bg-*_*.png'))):
     im = im.crop((0, top, w, top + crop_h)).resize(target, Image.BOX)
     im.save(os.path.join(dst, id + '.png'), optimize=True)
     print('bg', id)
-for f in sorted(glob.glob(os.path.join(src, 'title-art_*.png'))):
-    im = Image.open(f).convert('RGB').resize((320, 240), Image.BOX)
-    im.save(os.path.join(dst, 'title.png'), optimize=True)
-    print('title')
+for name, prefix in [('title', 'title-art_*.png'), ('ending', 'ending-art_*.png')]:
+    for f in sorted(glob.glob(os.path.join(src, prefix))):
+        im = Image.open(f).convert('RGB').resize((320, 240), Image.BOX)
+        im.save(os.path.join(dst, name + '.png'), optimize=True)
+        print(name)
 `;
 execFileSync('python3', ['-c', py, 'assets-src/bg', 'public/bg'], { stdio: 'inherit' });
 fs.mkdirSync('public/music', { recursive: true });

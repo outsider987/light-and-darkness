@@ -39,7 +39,7 @@ const list: EnemyDef[] = [
   // --- Chapter 5-6 ---
   e('dark_elf', 'Dark Elf', 'DELF', 13, 34, 8, 22, 13, 12, 5, 'walk', { body: 'elf', pal: { skin: '#705080', hair: '#f0f0f0', cloth: '#303050' }, hair: 'long', weapon: 'bow' }, { gold: 40, range: [2, 2] }),
   e('durahan', 'Durahan', 'DRHN', 14, 44, 0, 26, 18, 8, 6, 'walk', { body: 'skeleton', pal: { armor: '#303040' }, weapon: 'sword' }, { gold: 48, immuneStatus: true }),
-  e('chimera', 'Chimera', 'CHMR', 15, 48, 0, 27, 16, 12, 7, 'fly', { body: 'hound', pal: { cloth: '#c08030', trim: '#f8e030', extra: '#604020', hair: '#e0a020' } }, { gold: 55, spells: [{ spell: 'breath', level: 1 }] }),
+  e('chimera', 'Chimera', 'CHMR', 15, 48, 14, 27, 16, 12, 7, 'fly', { body: 'hound', pal: { cloth: '#c08030', trim: '#f8e030', extra: '#604020', hair: '#e0a020' } }, { gold: 55, spells: [{ spell: 'breath', level: 1 }] }),
   e('minotaur', 'Minotaur', 'MNTR', 15, 52, 0, 30, 17, 7, 5, 'walk', { body: 'minotaur', pal: {}, weapon: 'axe' }, { gold: 55 }),
   e('golem', 'Golem', 'GOLM', 16, 60, 0, 28, 22, 4, 4, 'walk', { body: 'golem', pal: { cloth: '#808890', trim: '#f84020' } }, { gold: 60, immuneStatus: true }),
   e('mishaela', 'Mishaela', 'WTCH', 14, 80, 40, 22, 15, 14, 5, 'walk', { body: 'mage', pal: { skin: '#e0c0d0', hair: '#8020a0', cloth: '#401060', trim: '#c060c0', extra: '#f0f060' }, hair: 'long', weapon: 'staff' }, { gold: 600, boss: true, spells: [{ spell: 'bolt', level: 1 }, { spell: 'sleep', level: 1 }], ai: 'boss', immuneStatus: true }),
@@ -49,15 +49,15 @@ const list: EnemyDef[] = [
   // --- Chapter 7-8 ---
   e('demon_master', 'Demon Master', 'DMST', 19, 58, 30, 32, 18, 14, 6, 'fly', { body: 'demon', pal: { skin: '#c04040', hair: '#401010', cloth: '#401010' } }, { gold: 70, spells: [{ spell: 'blaze', level: 3 }], ai: 'caster' }),
   e('cerberus', 'Cerberus', 'CRBR', 19, 60, 0, 34, 19, 16, 7, 'beast', { body: 'hound', pal: { cloth: '#403040', trim: '#f84040' } }, { gold: 70 }),
-  e('blue_dragon', 'Blue Dragon', 'BDRG', 20, 70, 0, 36, 22, 10, 6, 'fly', { body: 'bigdragon', pal: { cloth: '#3060d0', trim: '#a0c0f0', extra: '#203080' } }, { gold: 90, spells: [{ spell: 'breath', level: 2 }] }),
+  e('blue_dragon', 'Blue Dragon', 'BDRG', 20, 70, 24, 36, 22, 10, 6, 'fly', { body: 'bigdragon', pal: { cloth: '#3060d0', trim: '#a0c0f0', extra: '#203080' } }, { gold: 90, spells: [{ spell: 'breath', level: 2 }] }),
   e('dark_knight', 'Dark Knight', 'DKNT', 20, 64, 0, 35, 22, 11, 6, 'walk', { body: 'knightlord', pal: { skin: '#e0b080', hair: '#202030', cloth: '#202030', armor: '#303048', extra: '#601020' }, hair: 'helmet', weapon: 'sword' }, { gold: 80 }),
   e('high_priest', 'High Priest', 'HPRT', 21, 50, 40, 24, 16, 12, 5, 'walk', { body: 'priest', pal: { skin: '#d0b090', cloth: '#602020', trim: '#f0c040' }, hair: 'hood', weapon: 'staff' }, { gold: 80, spells: [{ spell: 'heal', level: 3 }, { spell: 'bolt', level: 1 }], ai: 'healer' }),
   e('colossus', 'Colossus', 'CLSS', 22, 160, 0, 40, 28, 5, 3, 'mech', { body: 'colossus', pal: { cloth: '#d0a030', trim: '#f84020' } }, { gold: 1500, boss: true, immuneStatus: true, spells: [{ spell: 'blast', level: 2 }] }),
   e('ramladu', 'Ramladu', 'KING', 23, 150, 40, 38, 24, 12, 5, 'walk', { body: 'king', pal: { skin: '#e0b080', hair: '#a0a0a0', cloth: '#402060', armor: '#603080', extra: '#801020' }, hair: 'crown', weapon: 'sword' }, { gold: 2000, boss: true, spells: [{ spell: 'bolt', level: 2 }], ai: 'boss', immuneStatus: true }),
-  e('dragon', 'Dragon', 'DRGN', 24, 90, 0, 42, 26, 12, 6, 'fly', { body: 'bigdragon', pal: { cloth: '#c03020', trim: '#f0c080', extra: '#601010' } }, { gold: 120, spells: [{ spell: 'breath', level: 3 }] }),
-  e('darksol', 'Darksol', 'DSOL', 26, 200, 80, 44, 26, 16, 5, 'float', { body: 'priest', pal: { skin: '#c0a0c0', cloth: '#201030', trim: '#8040a0' }, hair: 'hood', weapon: 'staff' }, { gold: 3000, boss: true, spells: [{ spell: 'bolt', level: 3 }, { spell: 'demonbreath', level: 1 }], ai: 'boss', immuneStatus: true }),
-  e('dark_dragon', 'Dark Dragon', 'DDRG', 30, 300, 100, 50, 30, 8, 0, 'fly', { body: 'bigdragon', pal: { cloth: '#301040', trim: '#8060a0', extra: '#100818' }, big: true }, { gold: 0, boss: true, ai: 'stationary', spells: [{ spell: 'demonbreath', level: 2 }, { spell: 'bolt', level: 4 }], immuneStatus: true }),
-  e('dragon_head', 'Dragon Head', 'DHED', 28, 160, 60, 46, 28, 8, 0, 'fly', { body: 'bigdragon', pal: { cloth: '#402050', trim: '#8060a0', extra: '#100818' } }, { gold: 0, ai: 'stationary', spells: [{ spell: 'breath', level: 3 }], immuneStatus: true }),
+  e('dragon', 'Dragon', 'DRGN', 24, 90, 30, 42, 26, 12, 6, 'fly', { body: 'bigdragon', pal: { cloth: '#c03020', trim: '#f0c080', extra: '#601010' } }, { gold: 120, spells: [{ spell: 'breath', level: 3 }] }),
+  e('darksol', 'Darksol', 'DSOL', 26, 200, 90, 44, 26, 16, 5, 'float', { body: 'priest', pal: { skin: '#c0a0c0', cloth: '#201030', trim: '#8040a0' }, hair: 'hood', weapon: 'staff' }, { gold: 3000, boss: true, spells: [{ spell: 'bolt', level: 3 }, { spell: 'demonbreath', level: 1 }], ai: 'boss', immuneStatus: true }),
+  e('dark_dragon', 'Dark Dragon', 'DDRG', 30, 300, 90, 50, 30, 8, 0, 'fly', { body: 'bigdragon', pal: { cloth: '#301040', trim: '#8060a0', extra: '#100818' }, big: true }, { gold: 0, boss: true, ai: 'stationary', spells: [{ spell: 'demonbreath', level: 2 }, { spell: 'bolt', level: 4 }], immuneStatus: true }),
+  e('dragon_head', 'Dragon Head', 'DHED', 28, 160, 42, 46, 28, 8, 0, 'fly', { body: 'bigdragon', pal: { cloth: '#402050', trim: '#8060a0', extra: '#100818' } }, { gold: 0, ai: 'stationary', spells: [{ spell: 'breath', level: 3 }], immuneStatus: true }),
 ];
 for (const en of list) ENEMIES[en.id] = en;
 

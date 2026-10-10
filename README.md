@@ -18,6 +18,7 @@ TypeScript + Canvas，零執行期依賴，所有圖像與音樂都由程式即�
   - 道具：四格道具欄、裝備武器與戒指、詛咒裝備、永久能力藥
   - 敵人 AI：待機誘敵、主動進攻、治療者、施法者、固定砲台（Laser Eye / Torch Eye）、Boss
 - 原創像素美術（所有人物、敵人、地形皆由程式繪製）、原創 chiptune 配樂（WebAudio 音序器）、音效合成
+- 戰鬥演出用的 12 張手繪風背景（草原、森林、山地、河畔、船甲板、城堡、洞窟、遺跡、荒地、熔岩、王座、古代之塔）與標題畫面，以及 15 首配樂，是用本地 ComfyUI 生成（Qwen Image 2.1 / ACE-Step 1.5），放在 `public/bg`、`public/music`；缺檔時自動退回程式生成的版本
 - 存檔於瀏覽器（教會存檔）；支援鍵盤、觸控按鈕、全螢幕
 
 ## 操作
@@ -40,8 +41,11 @@ npm install
 npm run dev        # http://localhost:5173
 npm test           # 內容完整性 + 戰鬥邏輯單元測試 (node:test)
 npm run build      # tsc + vite build -> dist/
-npm run smoke      # Playwright 無頭瀏覽器冒煙測試（需先啟動 dev 或 preview）
-node scripts/playthrough.mjs   # 自動打完全部 23 場戰鬥與所有 NPC 對話
+npm run preview    # 以正式建置啟動 http://localhost:4173 （測試腳本預設打這個）
+npm run smoke      # Playwright 無頭瀏覽器冒煙測試：標題→開場→城鎮→商店→教會→戰鬥
+npm run playthrough # 自動打完全部 23 場戰鬥，並執行每個地點的所有 NPC 腳本
+node scripts/tour.mjs            # 截圖所有地圖與戰場，做成 contact sheet
+node scripts/comfy/gen-backgrounds.mjs && node scripts/comfy/gen-music.mjs && npm run assets   # 用 ComfyUI 重新生成素材
 ```
 
 推送到 `main` 後，GitHub Actions 會自動測試、建置並部署到 GitHub Pages。

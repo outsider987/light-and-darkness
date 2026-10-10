@@ -110,6 +110,12 @@ export class TitleScene implements Scene {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, W, H);
     if (this.mode === 'opening') {
+      const art = image('title');
+      if (art) {
+        ctx.globalAlpha = 0.35;
+        ctx.drawImage(art, 0, 0, W, H);
+        ctx.globalAlpha = 1;
+      }
       let y = 70;
       for (const l of this.openingLines) {
         textCenter(l, W / 2, y, C.white);

@@ -8,6 +8,7 @@ import type { GameState } from '../types';
 import { unitSprite } from '../sprites';
 import { unitClass } from '../state';
 import { director } from '../director';
+import { image } from '../../engine/assets';
 
 export class EndingScene implements Scene {
   kind = 'ending';
@@ -76,6 +77,12 @@ export class EndingScene implements Scene {
   draw(): void {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, W, H);
+    const art = image('ending');
+    if (art) {
+      ctx.globalAlpha = this.done ? 0.9 : 0.45;
+      ctx.drawImage(art, 0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
     for (let i = 0; i < 30; i++) {
       const sx = (i * 101 + 17) % W, sy = (i * 61 + 11 + Math.floor(this.frame / 4)) % H;
       ctx.fillStyle = (this.frame + i) % 50 < 25 ? '#f8f8f8' : '#607090';

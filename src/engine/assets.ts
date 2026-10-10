@@ -21,5 +21,5 @@ export function preloadImages(ids: string[]): void {
   for (const id of ids) image(id);
 }
 
-export const BACKDROP_IDS = ['grass', 'forest', 'hills', 'water', 'sea', 'castle', 'cave', 'ruins', 'wasteland', 'lava', 'throne', 'tower', 'title'];
+export const BACKDROP_IDS = ['grass', 'forest', 'hills', 'water', 'sea', 'castle', 'cave', 'ruins', 'wasteland', 'lava', 'throne', 'tower', 'title', 'ending'];
 export const MUSIC_IDS = ['title', 'opening', 'town', 'hq', 'church', 'dungeon', 'battle', 'boss', 'victory', 'levelup', 'gameover', 'sea', 'castle', 'dark', 'ending'];
