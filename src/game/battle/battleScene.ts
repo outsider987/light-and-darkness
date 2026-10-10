@@ -543,6 +543,7 @@ export class BattleScene implements Scene {
     const tiles = this.areaFor(caster, L, cx, cy);
     const team = sp.target === 'ally' ? caster.team : caster.team === 'force' ? 'enemy' : 'force';
     const targets = tiles.map(([x, y]) => this.unitAt(x, y)).filter((t): t is Unit => !!t && t.team === team);
+    for (const t of targets) this.alertNear(t);
     // battle-screen presentation: caster vs. first target with an element effect
     const primary = targets[0] ?? caster;
     const left = caster.team === 'force' ? caster : primary.team === 'force' ? primary : caster;
@@ -750,7 +751,16 @@ export class BattleScene implements Scene {
 
   // ---- attacks & cutscene ----------------------------------------------------------
 
+  /** Enemies near a unit that was just attacked wake up (group activation, as in the original). */
+  alertNear(target: Unit): void {
+    if (target.team !== 'enemy') return;
+    for (const u of this.units) {
+      if (u.alive && u.team === 'enemy' && u.ai !== 'stationary' && dist(u.x, u.y, target.x, target.y) <= 3) u.triggered = true;
+    }
+  }
+
   *doAttack(att: Unit, def: Unit): Co<void> {
+    this.alertNear(def);
     const hits = resolveAttack(att, def, (x, y) => this.at(x, y), (u) => moveTypeOf(u));
     yield* this.cutscene(att, def, hits);
     // EXP for force participants
