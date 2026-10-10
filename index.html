@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="description" content="光明與黑暗 (Shining Force) — a complete browser remake. Tactical RPG, TypeScript + Canvas." />
+  <title>Light and Darkness — 光明與黑暗</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 fill=%27%2318288c%27/%3E%3Cpath d=%27M8 1l2 5h5l-4 3 1.5 5L8 11l-4.5 3L5 9 1 6h5z%27 fill=%27%23f8e048%27/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; }
+    #wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #game { display: block; image-rendering: pixelated; image-rendering: crisp-edges; background: #000; }
+    #touch { position: fixed; inset: 0; pointer-events: none; display: none; font-family: "Press Start 2P", monospace; }
+    body.touch #touch { display: block; }
+    .tb { position: absolute; width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.35); color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
+    .tb:active { background: rgba(255,255,255,0.4); }
+    #t-up { left: 72px; bottom: 136px; } #t-down { left: 72px; bottom: 16px; } #t-left { left: 12px; bottom: 76px; } #t-right { left: 132px; bottom: 76px; }
+    #t-a { right: 16px; bottom: 76px; } #t-b { right: 80px; bottom: 24px; } #t-c { right: 80px; bottom: 136px; }
+    #hint { position: fixed; left: 0; right: 0; bottom: 4px; text-align: center; color: #888; font: 10px/1.6 "Press Start 2P", monospace; pointer-events: none; }
+    body.touch #hint { display: none; }
+  </style>
+</head>
+<body>
+  <div id="wrap"><canvas id="game" width="320" height="240"></canvas></div>
+  <div id="touch">
+    <div class="tb" id="t-up" data-btn="up">▲</div>
+    <div class="tb" id="t-down" data-btn="down">▼</div>
+    <div class="tb" id="t-left" data-btn="left">◀</div>
+    <div class="tb" id="t-right" data-btn="right">▶</div>
+    <div class="tb" id="t-a" data-btn="a">A</div>
+    <div class="tb" id="t-b" data-btn="b">B</div>
+    <div class="tb" id="t-c" data-btn="c">C</div>
+  </div>
+  <div id="hint">ARROWS move · Z/ENTER confirm · X/ESC cancel · C menu · M mute · F fullscreen</div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
