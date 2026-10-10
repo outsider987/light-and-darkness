@@ -39,7 +39,7 @@ os.makedirs(dst, exist_ok=True)
 H = 104
 for f in sorted(glob.glob(os.path.join(src, '*.png'))):
     name = os.path.basename(f)
-    if name.endswith('.ref.png') or name.startswith('exp-'): continue
+    if name.endswith('.ref.png') or name.startswith('exp-') or 'sheet' in name: continue
     im = Image.open(f).convert('RGBA')
     px = im.load()
     w, h = im.size
